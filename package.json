@@ -1,0 +1,22 @@
+{
+  "name": "trade-feed-etl-health-checker",
+  "version": "1.0.0",
+  "scripts": {
+    "trade-feed-dl-db-setup:dev": "npm run run-protected -- dev \"ansible-playbook -e env_file=envs/dev.yml setup_postgres.yml\" trade-feed-etl-dev-profile <key-for-dev-environment> <your-password>",
+    "trade-feed-dl-db-setup:qa": "npm run run-protected -- qa \"ansible-playbook -e env_file=envs/qa.yml setup_postgres.yml\" trade-feed-etl-qa-profile <key-for-qa-environment> <your-password>",
+    "trade-feed-dl-db-setup:prod": "npm run run-protected -- prod \"ansible-playbook -e env_file=envs/prod.yml setup_postgres.yml\" trade-feed-etl-prod-profile <key-for-prod-environment> <your-password>",
+    "trade-feed-test-data-generate:dev": "npm run run-protected -- dev \"ansible-playbook -e env_file=envs/dev.yml generate_test_data.yml\" trade-feed-etl-dev-profile <key-for-dev-environment> <your-password>",
+    "trade-feed-test-data-generate:qa": "npm run run-protected -- qa \"ansible-playbook -e env_file=envs/qa.yml generate_test_data.yml\" trade-feed-etl-qa-profile <key-for-qa-environment> <your-password>",
+    "trade-feed-test-data-generate:prod": "npm run run-protected -- prod \"ansible-playbook -e env_file=envs/prod.yml generate_test_data.yml\" trade-feed-etl-prod-profile <key-for-prod-environment> <your-password>",
+    "trade-feed-aws-services-setup:dev": "npm run run-protected -- dev \"ansible-playbook -e env_file=envs/dev.yml setup_aws_services.yml\" trade-feed-etl-dev-profile <key-for-dev-environment> <your-password>",
+    "trade-feed-aws-services-setup:qa": "npm run run-protected -- qa \"ansible-playbook -e env_file=envs/qa.yml setup_aws_services.yml\" trade-feed-etl-qa-profile <key-for-qa-environment> <your-password>",
+    "trade-feed-aws-services-setup:prod": "npm run run-protected -- prod \"ansible-playbook -e env_file=envs/prod.yml setup_aws_services.yml\" trade-feed-etl-prod-profile <key-for-prod-environment> <your-password>",
+    "trade-feed-dl-db-terminate:dev": "npm run run-protected -- dev \"ansible-playbook -e env_file=envs/dev.yml terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\" trade-feed-etl-dev-profile <key-for-dev-environment> <your-password>",
+    "trade-feed-dl-db-terminate:qa": "npm run run-protected -- qa \"ansible-playbook -e env_file=envs/qa.yml terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\" trade-feed-etl-qa-profile <key-for-qa-environment> <your-password>",
+    "trade-feed-dl-db-terminate:prod": "npm run run-protected -- prod \"ansible-playbook -e env_file=envs/prod.yml terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\" trade-feed-etl-prod-profile <key-for-prod-environment> <your-password>",
+    "trade-feed-aws-services-terminate:dev": "npm run run-protected -- dev \"ansible-playbook -e env_file=envs/dev.yml terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\" trade-feed-etl-dev-profile <key-for-dev-environment> <your-password>",
+    "trade-feed-aws-services-terminate:qa": "npm run run-protected -- qa \"ansible-playbook -e env_file=envs/qa.yml terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\" trade-feed-etl-qa-profile <key-for-qa-environment> <your-password>",
+    "trade-feed-aws-services-terminate:prod": "npm run run-protected -- prod \"ansible-playbook -e env_file=envs/prod.yml terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\" trade-feed-etl-prod-profile <key-for-prod-environment>",
+    "run-protected": "sh -c './run_protected_playbook.sh \"$npm_package_script_args\"'"
+  }
+}
