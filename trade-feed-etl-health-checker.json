@@ -1,0 +1,15 @@
+{
+    "dev": {
+      "key": "your-dev-encryption-key",
+      "password": "your-dev-password"
+    },
+    "qa": {
+      "key": "your-qa-encryption-key",
+      "password": "your-qa-password"
+    },
+    "prod": {
+      "key": "your-prod-encryption-key",
+      "password": "your-prod-password"
+    }
+  }
+  

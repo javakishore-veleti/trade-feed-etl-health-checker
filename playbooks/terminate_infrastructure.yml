@@ -1,0 +1,31 @@
+---
+- name: Terminate specific infrastructure components
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - "{{ env_file }}"
+
+  tasks:
+    - name: Terminate RDS instance
+      community.aws.rds_instance:
+        instance_name: "{{ db_instance_identifier }}"
+        state: absent
+      when: rds_terminate | default(true)
+
+    - name: Delete Lambda function
+      community.aws.lambda:
+        name: "TradeFeedETLHealthChecker"
+        state: absent
+      when: lambda_terminate | default(true)
+
+    - name: Delete EventBridge rule
+      community.aws.eventbridge_rule:
+        name: "TradeFeedETLHealthCheckRule"
+        state: absent
+      when: eventbridge_terminate | default(true)
+
+    - name: Delete SES configuration
+      community.aws.ses_identity:
+        identity: "{{ ses_identity }}"
+        state: absent
+      when: ses_terminate | default(true)

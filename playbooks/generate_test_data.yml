@@ -1,0 +1,25 @@
+---
+- name: Generate test data for trades_data_ingestion_log
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - "{{ env_file }}"
+
+  tasks:
+    - name: Install psycopg2
+      pip:
+        name: psycopg2-binary
+
+    - name: Insert test data into the table
+      community.postgresql.postgresql_query:
+        db: "{{ db_name }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        query: |
+          INSERT INTO trades_data_ingestion_log (account_id, created, id, s3_bucket_location)
+          SELECT
+            md5(random()::text) AS account_id,
+            now() - interval '1 minute' * floor(random()*1000) AS created,
+            gen_random_uuid() AS id,
+            '{{ s3_bucket_base_url }}' || md5(random()::text) || '.csv' AS s3_bucket_location
+          FROM generate_series(1, {{ test_data_count }}) s(i);

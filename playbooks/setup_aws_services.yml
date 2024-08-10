@@ -1,0 +1,48 @@
+---
+- name: Setup AWS EventBridge, Lambda, and SES for Alerts
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - "{{ env_file }}"
+
+  tasks:
+    - name: Create IAM Role for Lambda
+      community.aws.iam_role:
+        name: "lambda_execution_role"
+        assume_role_policy_document: "{{ lookup('file', 'lambda_trust_policy.json') }}"
+        state: present
+
+    - name: Attach policies to the Lambda role
+      community.aws.iam_role_policy_attachment:
+        role_name: "lambda_execution_role"
+        policy_arn: "{{ item }}"
+      loop:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonSESFullAccess
+        - arn:aws:iam::aws:policy/AmazonRDSDataFullAccess
+
+    - name: Create Lambda function
+      community.aws.lambda:
+        name: "TradeFeedETLHealthChecker"
+        state: present
+        role: "arn:aws:iam::<your-account-id>:role/lambda_execution_role"
+        runtime: python3.8
+        handler: "lambda_function.lambda_handler"
+        zip_file: "fileb://trade_feed_etl_health_checker.zip"
+        timeout: 300
+        environment_variables:
+          DB_NAME: "{{ db_name }}"
+          DB_USER: "{{ db_user }}"
+          DB_PASSWORD: "{{ db_password }}"
+          NOTIFICATION_EMAILS: ""
+
+    - name: Setup EventBridge Rule
+      community.aws.eventbridge_rule:
+        name: "TradeFeedETLHealthCheckRule"
+        schedule_expression: "rate(15 minutes)"
+        state: "ENABLED"
+
+    - name: Add target to EventBridge Rule
+      community.aws.eventbridge_target:
+        rule: "TradeFeedETLHealthCheckRule"
+        arn: "arn:aws:lambda:<your-region>:<your-account-id>:function:TradeFeedETLHealthChecker"

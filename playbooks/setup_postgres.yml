@@ -1,0 +1,29 @@
+---
+- name: Setup PostgreSQL Database in AWS and Create Table
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - "{{ env_file }}"
+
+  tasks:
+    - name: Create PostgreSQL RDS instance
+      community.aws.rds_instance:
+        instance_name: "{{ db_instance_identifier }}"
+        db_name: "{{ db_name }}"
+        allocated_storage: "{{ db_allocated_storage }}"
+        db_instance_class: "{{ db_instance_class }}"
+        engine: "{{ db_engine }}"
+        master_username: "{{ db_user }}"
+        master_user_password: "{{ db_password }}"
+        db_subnet_group_name: "{{ db_subnet_group_name }}"
+        vpc_security_group_ids: "{{ vpc_security_group_ids }}"
+        state: present
+      environment:
+        AWS_PROFILE: "{{ aws_profile }}"
+
+    - name: Wait for the RDS instance to be available
+      community.aws.rds_instance:
+        instance_name: "{{ db_instance_identifier }}"
+        wait: yes
+      environment:
+        AWS_PROFILE: "{{ aws_profile }}"

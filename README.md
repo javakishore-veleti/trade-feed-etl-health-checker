@@ -3,6 +3,16 @@ trade-feed-etl-health-checker is a comprehensive infrastructure automation solut
 
 The repository implements security controls that require password validation before executing any infrastructure-related operations. The passwords are securely encrypted, and an AWS profile is used to ensure that operations are environment-specific.
 
+##
+```shell
+# Ensure that jq is installed on the machine where the script will run. jq is a lightweight and flexible command-line JSON processor.
+
+sudo apt-get install jq   # For Debian/Ubuntu
+brew install jq           # For macOS
+choco install jq          # For Windows
+
+```
+
 # Key Features
 ### Environment-Specific Infrastructure: 
 Supports multiple environments (Dev, QA, Prod, Pre-Prod, Demo) with separate configurations for each.
