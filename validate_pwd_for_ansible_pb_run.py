@@ -1,8 +1,6 @@
 import hashlib
 import sys
-import yaml
 from cryptography.fernet import Fernet
-import os
 
 def decrypt_password_file(encrypted_password_file, key):
     with open(encrypted_password_file, 'rb') as file:
@@ -28,12 +26,6 @@ if __name__ == "__main__":
     try:
         decrypted_password = decrypt_password_file(encrypted_password_file, key)
         if validate_password(password, decrypted_password):
-            # Load AWS profile from environment file
-            with open(f'envs/{os.environ["ENVIRONMENT"]}.yml', 'r') as stream:
-                config = yaml.safe_load(stream)
-                aws_profile = config.get('aws_profile')
-                os.environ['AWS_PROFILE'] = aws_profile
-
             sys.exit(0)  # Password is correct
         else:
             print("Incorrect password.")

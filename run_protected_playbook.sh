@@ -1,33 +1,30 @@
+#!/bin/sh
+
 # Define paths and variables
-param (
-    [string]$Environment,
-    [string]$PlaybookCommand
-)
+ENVIRONMENT=$1
+PLAYBOOK_COMMAND=$2
+ENCRYPTED_PASSWORD_FILE="envs/$ENVIRONMENT/password.enc"
+ENV_FILE="envs/$ENVIRONMENT/$ENVIRONMENT.yml"
 
-$HomeDir = $env:USERPROFILE
-$JsonFilePath = "$HomeDir\trade-feed-etl-health-checker.json"
+# Load AWS profile from the environment file
+AWS_PROFILE=$(grep 'aws_profile' "$ENV_FILE" | awk -F ": " '{print $2}')
 
-# Load AWS profile from the environment YAML file
-$EnvFileContent = Get-Content "envs\$Environment.yml"
-$AwsProfile = ($EnvFileContent | Select-String -Pattern "aws_profile").Line.Split(": ")[1].Trim()
+# Export the AWS profile for the session
+export AWS_PROFILE=$AWS_PROFILE
 
-# Set the AWS profile for the session
-$env:AWS_PROFILE = $AwsProfile
+# Load key and password from JSON file in user's home directory
+JSON_FILE="$HOME/trade-feed-etl-health-checker.json"
+KEY=$(jq -r ".${ENVIRONMENT}.key" "$JSON_FILE")
+PASSWORD=$(jq -r ".${ENVIRONMENT}.password" "$JSON_FILE")
 
-# Load key and password from the JSON file
-$JsonContent = Get-Content -Raw -Path $JsonFilePath | ConvertFrom-Json
-$Key = $JsonContent.$Environment.key
-$Password = $JsonContent.$Environment.password
-
-# Run Python script to validate the password
-$PythonScript = "python3 validate_pwd_for_ansible_pb_run.py '$Password' 'envs\$Environment\password.enc' '$Key'"
-Invoke-Expression $PythonScript
+# Validate the password
+python3 validate_pwd_for_ansible_pb_run.py "$PASSWORD" "$ENCRYPTED_PASSWORD_FILE" "$KEY"
 
 # Check if password validation was successful
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "Password validated successfully. Running Ansible playbook..."
-    Invoke-Expression $PlaybookCommand
-} else {
-    Write-Host "Failed to validate password. Aborting..."
+if [ $? -eq 0 ]; then
+    echo "Password validated successfully. Running Ansible playbook..."
+    eval "$PLAYBOOK_COMMAND"
+else
+    echo "Failed to validate password. Aborting..."
     exit 1
-}
+fi

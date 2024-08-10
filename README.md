@@ -11,6 +11,23 @@ sudo apt-get install jq   # For Debian/Ubuntu
 brew install jq           # For macOS
 choco install jq          # For Windows
 
+ mkdir -p envs/dev
+ mkdir -p envs/prod
+ mkdir -p envs/qa  
+ mkdir -p envs/pre-prod
+ mkdir -p envs/demo
+
+ echo -n "your-dev-password" | openssl enc -aes-256-cbc -a -salt -pass pass:your-encryption-key -out envs/dev/password.enc
+
+ echo -n "your-prod-password" | openssl enc -aes-256-cbc -a -salt -pass pass:your-encryption-key -out envs/prod/password.enc
+
+echo -n "your-qa-password" | openssl enc -aes-256-cbc -a -salt -pass pass:your-encryption-key -out envs/qa/password.enc
+
+echo -n "your-pre-prod-password" | openssl enc -aes-256-cbc -a -salt -pass pass:your-encryption-key -out envs/pre-prod/password.enc
+
+echo -n "your-demo-password" | openssl enc -aes-256-cbc -a -salt -pass pass:your-encryption-key -out envs/demo/password.enc
+
+
 ```
 
 # Key Features

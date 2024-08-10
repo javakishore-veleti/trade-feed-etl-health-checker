@@ -1,0 +1,10 @@
+aws_profile: "trade-feed-etl-dev-profile"
+db_instance_identifier: "dev-trade-feed-db"
+db_name: "trade_feed_db"
+db_user: "db_user"
+db_password: "your-db-password"
+db_instance_class: "db.t2.micro"
+db_engine: "postgres"
+db_allocated_storage: 20
+db_subnet_group_name: "your-subnet-group"
+vpc_security_group_ids: ["your-security-group-id"]

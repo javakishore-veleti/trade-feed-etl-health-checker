@@ -2,24 +2,24 @@
   "name": "trade-feed-etl-health-checker",
   "version": "1.0.0",
   "scripts": {
-    "trade-feed-dl-db-setup:dev": "powershell -File .\\run_protected_playbook.ps1 dev \"ansible-playbook -e env_file=envs/dev.yml playbooks/setup_postgres.yml\"",
-    "trade-feed-dl-db-setup:qa": "powershell -File .\\run_protected_playbook.ps1 qa \"ansible-playbook -e env_file=envs/qa.yml playbooks/setup_postgres.yml\"",
-    "trade-feed-dl-db-setup:prod": "powershell -File .\\run_protected_playbook.ps1 prod \"ansible-playbook -e env_file=envs/prod.yml playbooks/setup_postgres.yml\"",
+    "trade-feed-dl-db-setup:dev": "sh ./run_protected_playbook.sh dev \"ansible-playbook -e env_file=envs/dev/dev.yml playbooks/setup_postgres.yml\"",
+    "trade-feed-dl-db-setup:qa": "sh ./run_protected_playbook.sh qa \"ansible-playbook -e env_file=envs/qa/qa.yml playbooks/setup_postgres.yml\"",
+    "trade-feed-dl-db-setup:prod": "sh ./run_protected_playbook.sh prod \"ansible-playbook -e env_file=envs/prod/prod.yml playbooks/setup_postgres.yml\"",
 
-    "trade-feed-test-data-generate:dev": "powershell -File .\\run_protected_playbook.ps1 dev \"ansible-playbook -e env_file=envs/dev.yml playbooks/generate_test_data.yml\"",
-    "trade-feed-test-data-generate:qa": "powershell -File .\\run_protected_playbook.ps1 qa \"ansible-playbook -e env_file=envs/qa.yml playbooks/generate_test_data.yml\"",
-    "trade-feed-test-data-generate:prod": "powershell -File .\\run_protected_playbook.ps1 prod \"ansible-playbook -e env_file=envs/prod.yml playbooks/generate_test_data.yml\"",
+    "trade-feed-test-data-generate:dev": "sh ./run_protected_playbook.sh dev \"ansible-playbook -e env_file=envs/dev/dev.yml playbooks/generate_test_data.yml\"",
+    "trade-feed-test-data-generate:qa": "sh ./run_protected_playbook.sh qa \"ansible-playbook -e env_file=envs/qa/qa.yml playbooks/generate_test_data.yml\"",
+    "trade-feed-test-data-generate:prod": "sh ./run_protected_playbook.sh prod \"ansible-playbook -e env_file=envs/prod/prod.yml playbooks/generate_test_data.yml\"",
 
-    "trade-feed-aws-services-setup:dev": "powershell -File .\\run_protected_playbook.ps1 dev \"ansible-playbook -e env_file=envs/dev.yml playbooks/setup_aws_services.yml\"",
-    "trade-feed-aws-services-setup:qa": "powershell -File .\\run_protected_playbook.ps1 qa \"ansible-playbook -e env_file=envs/qa.yml playbooks/setup_aws_services.yml\"",
-    "trade-feed-aws-services-setup:prod": "powershell -File .\\run_protected_playbook.ps1 prod \"ansible-playbook -e env_file=envs/prod.yml playbooks/setup_aws_services.yml\"",
+    "trade-feed-aws-services-setup:dev": "sh ./run_protected_playbook.sh dev \"ansible-playbook -e env_file=envs/dev/dev.yml playbooks/setup_aws_services.yml\"",
+    "trade-feed-aws-services-setup:qa": "sh ./run_protected_playbook.sh qa \"ansible-playbook -e env_file=envs/qa/qa.yml playbooks/setup_aws_services.yml\"",
+    "trade-feed-aws-services-setup:prod": "sh ./run_protected_playbook.sh prod \"ansible-playbook -e env_file=envs/prod/prod.yml playbooks/setup_aws_services.yml\"",
 
-    "trade-feed-dl-db-terminate:dev": "powershell -File .\\run_protected_playbook.ps1 dev \"ansible-playbook -e env_file=envs/dev.yml playbooks/terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\"",
-    "trade-feed-dl-db-terminate:qa": "powershell -File .\\run_protected_playbook.ps1 qa \"ansible-playbook -e env_file=envs/qa.yml playbooks/terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\"",
-    "trade-feed-dl-db-terminate:prod": "powershell -File .\\run_protected_playbook.ps1 prod \"ansible-playbook -e env_file=envs/prod.yml playbooks/terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\"",
+    "trade-feed-dl-db-terminate:dev": "sh ./run_protected_playbook.sh dev \"ansible-playbook -e env_file=envs/dev/dev.yml playbooks/terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\"",
+    "trade-feed-dl-db-terminate:qa": "sh ./run_protected_playbook.sh qa \"ansible-playbook -e env_file=envs/qa/qa.yml playbooks/terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\"",
+    "trade-feed-dl-db-terminate:prod": "sh ./run_protected_playbook.sh prod \"ansible-playbook -e env_file=envs/prod/prod.yml playbooks/terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\"",
 
-    "trade-feed-aws-services-terminate:dev": "powershell -File .\\run_protected_playbook.ps1 dev \"ansible-playbook -e env_file=envs/dev.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\"",
-    "trade-feed-aws-services-terminate:qa": "powershell -File .\\run_protected_playbook.ps1 qa \"ansible-playbook -e env_file=envs/qa.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\"",
-    "trade-feed-aws-services-terminate:prod": "powershell -File .\\run_protected_playbook.ps1 prod \"ansible-playbook -e env_file=envs/prod.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\""
+    "trade-feed-aws-services-terminate:dev": "sh ./run_protected_playbook.sh dev \"ansible-playbook -e env_file=envs/dev/dev.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\"",
+    "trade-feed-aws-services-terminate:qa": "sh ./run_protected_playbook.sh qa \"ansible-playbook -e env_file=envs/qa/qa.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\"",
+    "trade-feed-aws-services-terminate:prod": "sh ./run_protected_playbook.sh prod \"ansible-playbook -e env_file=envs/prod/prod.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\""
   }
 }
