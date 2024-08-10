@@ -36,7 +36,7 @@
    ```bash
    git clone https://github.com/javakishore-veleti/trade-feed-etl-health-checker.git
    cd trade-feed-etl-health-checker
-   
+
 ##
 ```shell
 # Ensure that jq is installed on the machine where the script will run. jq is a lightweight and flexible command-line JSON processor.
@@ -51,6 +51,12 @@ choco install jq          # For Windows
  mkdir -p envs/pre-prod
  mkdir -p envs/demo
 
+ touch envs/dev/dev.yml
+ touch envs/prod/prod.yml
+ touch envs/qa/qa.yml
+ touch envs/pre-prod/pre-prod.yml
+ touch envs/demo/demo.yml
+
  echo -n "your-dev-password" | openssl enc -aes-256-cbc -a -salt -pass pass:your-encryption-key -out envs/dev/password.enc
 
  echo -n "your-prod-password" | openssl enc -aes-256-cbc -a -salt -pass pass:your-encryption-key -out envs/prod/password.enc
@@ -60,6 +66,24 @@ echo -n "your-qa-password" | openssl enc -aes-256-cbc -a -salt -pass pass:your-e
 echo -n "your-pre-prod-password" | openssl enc -aes-256-cbc -a -salt -pass pass:your-encryption-key -out envs/pre-prod/password.enc
 
 echo -n "your-demo-password" | openssl enc -aes-256-cbc -a -salt -pass pass:your-encryption-key -out envs/demo/password.enc
+
+
+touch ~/trade-feed-etl-health-checker.json
+
+sudo apt-get install jq      # For Ubuntu/Debian
+brew install jq              # For macOS
+choco install jq             # For Windows (via Git Bash or PowerShell)
+
+sudo apt-get install ansible   # For Ubuntu/Debian
+brew install ansible           # For macOS
+choco install ansible          # For Windows (via WSL or Cygwin)
+
+sudo apt-get install awscli    # For Ubuntu/Debian
+brew install awscli            # For macOS
+choco install awscli           # For Windows
+
+sudo apt-get install npm       # For Ubuntu/Debian
+brew install npm               # For macOS
 
 
 ```
