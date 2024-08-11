@@ -8,6 +8,30 @@
     aws_credentials: "{{ lookup('file', json_file_path) | from_json }}"
 
   tasks:
+    - name: Create the Lambda function
+      lambda:
+        state: present
+        name: "trade-feed-{{ environment }}-lambda"
+        region: "{{ aws_region }}"
+        runtime: python3.8
+        role: "arn:aws:iam::123456789012:role/service-role/YourLambdaExecutionRole"
+        handler: "lambda_function.lambda_handler"
+        code: /path/to/your/lambda/function.zip
+        aws_access_key: "{{ aws_credentials.aws_access_key_id }}"
+        aws_secret_key: "{{ aws_credentials.aws_secret_access_key }}"
+
+    - name: Retrieve the Lambda function ARN
+      command: >
+        aws lambda get-function --function-name trade-feed-{{ environment }}-lambda --region {{ aws_region }}
+        --query 'Configuration.FunctionArn' --output text
+      register: lambda_arn
+
+    - name: Store the Lambda function ARN in the JSON file
+      lineinfile:
+        path: "{{ json_file_path }}"
+        line: "\"lambda_function_arn\": \"{{ lambda_arn.stdout }}\","
+        insertafter: "\"ses_email\": \"{{ aws_credentials.ses_email }}\""
+
     - name: Set up AWS EventBridge rule
       aws_eventbridge_rule:
         name: "trade-feed-health-check"
@@ -21,7 +45,7 @@
     - name: Add Lambda target to the EventBridge rule
       aws_eventbridge_target:
         rule: "trade-feed-health-check"
-        arn: "{{ aws_credentials.lambda_function_arn }}"
+        arn: "{{ lambda_arn.stdout }}"
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_credentials.aws_access_key_id }}"
         aws_secret_key: "{{ aws_credentials.aws_secret_access_key }}"
@@ -30,20 +54,6 @@
       aws_ses_identity:
         email: "{{ aws_credentials.ses_email }}"
         state: present
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_credentials.aws_access_key_id }}"
-        aws_secret_key: "{{ aws_credentials.aws_secret_access_key }}"
-
-    - name: Create SES sending authorization policy (optional)
-      aws_ses_identity_policy:
-        email: "{{ aws_credentials.ses_email }}"
-        policy_name: "SendEmailPolicy"
-        policy:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: "Allow"
-              Action: "ses:SendEmail"
-              Resource: "*"
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_credentials.aws_access_key_id }}"
         aws_secret_key: "{{ aws_credentials.aws_secret_access_key }}"
