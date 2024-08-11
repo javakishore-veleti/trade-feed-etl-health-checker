@@ -2,8 +2,9 @@
   "name": "trade-feed-etl-health-checker",
   "version": "1.0.0",
   "scripts": {
+    "create-password-enc": "sh ./create_password_enc.sh",
     "create-template-jsons": "sh ./create_template_jsons.sh",
-    "trade-feed-dl-db-setup:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 \"ansible-playbook -e env_file=envs/dev/us-east-1.yml playbooks/setup_postgres.yml\"",
+    "trade-feed-dl-db-setup:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 playbooks/setup_postgres.yml",
     "trade-feed-dl-db-setup:qa-eu-west-1": "sh ./run_protected_playbook.sh qa-eu-west-1 \"ansible-playbook -e env_file=envs/qa/eu-west-1.yml playbooks/setup_postgres.yml\"",
     "trade-feed-dl-db-setup:prod-ap-south-1": "sh ./run_protected_playbook.sh prod-ap-south-1 \"ansible-playbook -e env_file=envs/prod/ap-south-1.yml playbooks/setup_postgres.yml\"",
 

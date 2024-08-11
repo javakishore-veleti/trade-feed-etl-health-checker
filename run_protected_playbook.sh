@@ -26,13 +26,15 @@ PASSWORD_FILE="${HOME_DIR}/trade-feed-etl-health-checker_${AWS_REGION}_${ENVIRON
 
 # Check if the JSON file exists
 if [ ! -f "$JSON_FILE" ]; then
-    echo "JSON configuration file not found: $JSON_FILE"
+    echo "ERROR: JSON configuration file not found: $JSON_FILE"
+    echo "Make sure the file exists and is correctly named."
     exit 1
 fi
 
 # Check if the password file exists
 if [ ! -f "$PASSWORD_FILE" ]; then
-    echo "Password file not found: $PASSWORD_FILE"
+    echo "ERROR: Password file not found: $PASSWORD_FILE"
+    echo "Make sure the password.enc file is present in the correct directory."
     exit 1
 fi
 
@@ -40,13 +42,38 @@ fi
 KEY=$(jq -r ".key" "$JSON_FILE")
 PASSWORD=$(jq -r ".password" "$JSON_FILE")
 
-# Validate the password by decrypting the password file and comparing
-echo -n "$PASSWORD" | openssl enc -aes-256-cbc -d -a -salt -pass pass:"$KEY" -in "$PASSWORD_FILE" | grep -q "$PASSWORD"
-
-if [ $? -ne 0 ]; then
-    echo "Password validation failed."
+# Check if the key and password were extracted correctly
+if [ -z "$KEY" ]; then
+    echo "ERROR: Encryption key not found in $JSON_FILE"
+    echo "Make sure the 'key' field is present and correctly set."
     exit 1
 fi
 
-# Run the Ansible playbook with the appropriate environment and region
-ansible-playbook -e "aws_region=${AWS_REGION} environment=${ENVIRONMENT} json_file_path=${JSON_FILE}" $PLAYBOOK_COMMAND
+if [ -z "$PASSWORD" ]; then
+    echo "ERROR: Password not found in $JSON_FILE"
+    echo "Make sure the 'password' field is present and correctly set."
+    exit 1
+fi
+
+# Read the stored password from the password.enc file
+STORED_PASSWORD=$(cat "$PASSWORD_FILE")
+
+# Compare the stored password with the password from the JSON file
+if [ "$STORED_PASSWORD" != "$PASSWORD" ]; then
+    echo "ERROR: Password validation failed."
+    echo "Possible reasons and fixes:"
+    echo "- The password in the JSON file (${JSON_FILE}) does not match the password stored in ${PASSWORD_FILE}."
+    echo "  FIX: Open the JSON file and verify that the 'password' field matches the password stored in the password.enc file."
+    echo "- The password.enc file (${PASSWORD_FILE}) was not created using the password in the JSON file."
+    echo "  FIX: Recreate the password.enc file using the 'npm run create-password-enc' command, ensuring that the password in the JSON file matches."
+    exit 1
+else
+    echo "Password validation succeeded."
+fi
+
+# Correctly structure the ansible-playbook command
+ANSIBLE_CMD="ansible-playbook -e aws_region=${AWS_REGION} -e environment=${ENVIRONMENT} -e json_file_path=${JSON_FILE} $PLAYBOOK_COMMAND"
+
+# Execute the ansible-playbook command
+echo "Running: $ANSIBLE_CMD"
+$ANSIBLE_CMD

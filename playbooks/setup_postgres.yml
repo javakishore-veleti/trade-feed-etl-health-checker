@@ -1,28 +1,38 @@
 ---
-- name: Set up PostgreSQL database in AWS
+- name: Set up PostgreSQL in RDS
   hosts: localhost
+  connection: local
   gather_facts: no
 
+  collections:
+    - amazon.aws
+
   vars:
-    json_file_path: "{{ lookup('env', 'HOME') }}/trade-feed-etl-health-checker_{{ aws_region }}_{{ environment }}.json"
-    aws_credentials: "{{ lookup('file', json_file_path) | from_json }}"
+    # Load values from the JSON file in the user's home directory
+    json_data: "{{ lookup('file', json_file_path) | from_json }}"
+    
+    aws_region: "{{ json_data.aws_region | default('us-east-1') }}"
+    vpc_security_group_ids: "{{ json_data.vpc_security_group_ids | default([]) }}"
+    master_username: "{{ json_data.master_username | default('defaultuser') }}"
+    master_user_password: "{{ json_data.master_user_password | default('defaultpassword') }}"
+
+    db_instance_identifier: "{{ lookup('vars', 'db_instance_identifier', default='default-postgres-instance') }}"
+    db_name: "{{ lookup('vars', 'db_name', default='defaultdatabase') }}"
+    allocated_storage: "{{ lookup('vars', 'allocated_storage', default=20) }}"
+    db_instance_class: "{{ lookup('vars', 'db_instance_class', default='db.t2.micro') }}"
 
   tasks:
     - name: Create RDS PostgreSQL instance
-      rds:
-        command: create
-        id: "{{ environment }}-rds-instance"
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_credentials.aws_access_key_id }}"
-        aws_secret_key: "{{ aws_credentials.aws_secret_access_key }}"
-        db_instance_class: db.t2.micro
+      amazon.aws.rds:
+        db_instance_identifier: "{{ db_instance_identifier }}"
+        db_name: "{{ db_name }}"
         engine: postgres
-        allocated_storage: 20
-        master_username: "{{ aws_credentials.db_master_username }}"
-        master_password: "{{ aws_credentials.db_master_password }}"
-        db_name: "trade_feed_db"
-        multi_az: no
-        vpc_security_group_ids:
-          - sg-12345678
-        db_subnet_group_name: my-subnet-group
-        publicly_accessible: yes
+        master_username: "{{ master_username }}"
+        master_user_password: "{{ master_user_password }}"
+        allocated_storage: "{{ allocated_storage }}"
+        db_instance_class: "{{ db_instance_class }}"
+        vpc_security_group_ids: "{{ vpc_security_group_ids }}"
+        state: present
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ json_data.aws_access_key_id | default(lookup('env', 'AWS_ACCESS_KEY_ID')) }}"
+        aws_secret_key: "{{ json_data.aws_secret_access_key | default(lookup('env', 'AWS_SECRET_ACCESS_KEY')) }}"

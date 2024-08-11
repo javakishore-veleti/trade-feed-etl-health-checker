@@ -164,6 +164,9 @@ echo -n "your-pre-prod-password" | openssl enc -aes-256-cbc -a -salt -pass pass:
 
 echo -n "your-demo-password" | openssl enc -aes-256-cbc -a -salt -pass pass:your-encryption-key -out envs/demo/password.enc
 
+npm run create-password-enc
+# I have provide trade-feed-etl-health-checker value for both encryption key and password
+# for the above command
 
 touch ~/trade-feed-etl-health-checker.json
 
