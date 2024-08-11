@@ -1,31 +1,39 @@
 ---
-- name: Terminate specific infrastructure components
+- name: Terminate infrastructure
   hosts: localhost
   gather_facts: no
-  vars_files:
-    - "{{ env_file }}"
+
+  vars:
+    json_file_path: "{{ lookup('env', 'HOME') }}/trade-feed-etl-health-checker_{{ aws_region }}_{{ environment }}.json"
+    aws_credentials: "{{ lookup('file', json_file_path) | from_json }}"
+    rds_terminate: true
+    lambda_terminate: true
+    eventbridge_terminate: true
 
   tasks:
-    - name: Terminate RDS instance
-      community.aws.rds_instance:
-        instance_name: "{{ db_instance_identifier }}"
-        state: absent
-      when: rds_terminate | default(true)
+    - name: Terminate RDS instance (optional)
+      rds:
+        command: delete
+        id: "{{ environment }}-rds-instance"
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_credentials.aws_access_key_id }}"
+        aws_secret_key: "{{ aws_credentials.aws_secret_access_key }}"
+      when: rds_terminate
 
-    - name: Delete Lambda function
-      community.aws.lambda:
-        name: "TradeFeedETLHealthChecker"
+    - name: Delete Lambda function (optional)
+      lambda:
         state: absent
-      when: lambda_terminate | default(true)
+        name: "{{ aws_credentials.lambda_function_arn | regex_replace('^arn:aws:lambda:.*:function:', '') }}"
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_credentials.aws_access_key_id }}"
+        aws_secret_key: "{{ aws_credentials.aws_secret_access_key }}"
+      when: lambda_terminate
 
-    - name: Delete EventBridge rule
-      community.aws.eventbridge_rule:
-        name: "TradeFeedETLHealthCheckRule"
-        state: absent
-      when: eventbridge_terminate | default(true)
-
-    - name: Delete SES configuration
-      community.aws.ses_identity:
-        identity: "{{ ses_identity }}"
-        state: absent
-      when: ses_terminate | default(true)
+    - name: Delete EventBridge rule (optional)
+      aws_eventbridge_rule:
+        name: "trade-feed-health-check"
+        state: "absent"
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_credentials.aws_access_key_id }}"
+        aws_secret_key: "{{ aws_credentials.aws_secret_access_key }}"
+      when: eventbridge_terminate

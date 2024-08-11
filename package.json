@@ -2,24 +2,24 @@
   "name": "trade-feed-etl-health-checker",
   "version": "1.0.0",
   "scripts": {
-    "trade-feed-dl-db-setup:dev": "sh ./run_protected_playbook.sh dev \"ansible-playbook -e env_file=envs/dev/dev.yml playbooks/setup_postgres.yml\"",
-    "trade-feed-dl-db-setup:qa": "sh ./run_protected_playbook.sh qa \"ansible-playbook -e env_file=envs/qa/qa.yml playbooks/setup_postgres.yml\"",
-    "trade-feed-dl-db-setup:prod": "sh ./run_protected_playbook.sh prod \"ansible-playbook -e env_file=envs/prod/prod.yml playbooks/setup_postgres.yml\"",
+    "trade-feed-dl-db-setup:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 \"ansible-playbook -e env_file=envs/dev/us-east-1.yml playbooks/setup_postgres.yml\"",
+    "trade-feed-dl-db-setup:qa-eu-west-1": "sh ./run_protected_playbook.sh qa-eu-west-1 \"ansible-playbook -e env_file=envs/qa/eu-west-1.yml playbooks/setup_postgres.yml\"",
+    "trade-feed-dl-db-setup:prod-ap-south-1": "sh ./run_protected_playbook.sh prod-ap-south-1 \"ansible-playbook -e env_file=envs/prod/ap-south-1.yml playbooks/setup_postgres.yml\"",
 
-    "trade-feed-test-data-generate:dev": "sh ./run_protected_playbook.sh dev \"ansible-playbook -e env_file=envs/dev/dev.yml playbooks/generate_test_data.yml\"",
-    "trade-feed-test-data-generate:qa": "sh ./run_protected_playbook.sh qa \"ansible-playbook -e env_file=envs/qa/qa.yml playbooks/generate_test_data.yml\"",
-    "trade-feed-test-data-generate:prod": "sh ./run_protected_playbook.sh prod \"ansible-playbook -e env_file=envs/prod/prod.yml playbooks/generate_test_data.yml\"",
+    "trade-feed-test-data-generate:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 \"ansible-playbook -e env_file=envs/dev/us-east-1.yml playbooks/generate_test_data.yml\"",
+    "trade-feed-test-data-generate:qa-eu-west-1": "sh ./run_protected_playbook.sh qa-eu-west-1 \"ansible-playbook -e env_file=envs/qa/eu-west-1.yml playbooks/generate_test_data.yml\"",
+    "trade-feed-test-data-generate:prod-ap-south-1": "sh ./run_protected_playbook.sh prod-ap-south-1 \"ansible-playbook -e env_file=envs/prod/ap-south-1.yml playbooks/generate_test_data.yml\"",
 
-    "trade-feed-aws-services-setup:dev": "sh ./run_protected_playbook.sh dev \"ansible-playbook -e env_file=envs/dev/dev.yml playbooks/setup_aws_services.yml\"",
-    "trade-feed-aws-services-setup:qa": "sh ./run_protected_playbook.sh qa \"ansible-playbook -e env_file=envs/qa/qa.yml playbooks/setup_aws_services.yml\"",
-    "trade-feed-aws-services-setup:prod": "sh ./run_protected_playbook.sh prod \"ansible-playbook -e env_file=envs/prod/prod.yml playbooks/setup_aws_services.yml\"",
+    "trade-feed-aws-services-setup:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 \"ansible-playbook -e env_file=envs/dev/us-east-1.yml playbooks/setup_aws_services.yml\"",
+    "trade-feed-aws-services-setup:qa-eu-west-1": "sh ./run_protected_playbook.sh qa-eu-west-1 \"ansible-playbook -e env_file=envs/qa/eu-west-1.yml playbooks/setup_aws_services.yml\"",
+    "trade-feed-aws-services-setup:prod-ap-south-1": "sh ./run_protected_playbook.sh prod-ap-south-1 \"ansible-playbook -e env_file=envs/prod/ap-south-1.yml playbooks/setup_aws_services.yml\"",
 
-    "trade-feed-dl-db-terminate:dev": "sh ./run_protected_playbook.sh dev \"ansible-playbook -e env_file=envs/dev/dev.yml playbooks/terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\"",
-    "trade-feed-dl-db-terminate:qa": "sh ./run_protected_playbook.sh qa \"ansible-playbook -e env_file=envs/qa/qa.yml playbooks/terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\"",
-    "trade-feed-dl-db-terminate:prod": "sh ./run_protected_playbook.sh prod \"ansible-playbook -e env_file=envs/prod/prod.yml playbooks/terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\"",
+    "trade-feed-dl-db-terminate:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 \"ansible-playbook -e env_file=envs/dev/us-east-1.yml playbooks/terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\"",
+    "trade-feed-dl-db-terminate:qa-eu-west-1": "sh ./run_protected_playbook.sh qa-eu-west-1 \"ansible-playbook -e env_file=envs/qa/eu-west-1.yml playbooks/terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\"",
+    "trade-feed-dl-db-terminate:prod-ap-south-1": "sh ./run_protected_playbook.sh prod-ap-south-1 \"ansible-playbook -e env_file=envs/prod/ap-south-1.yml playbooks/terminate_infrastructure.yml -e rds_terminate=true -e lambda_terminate=false -e eventbridge_terminate=false\"",
 
-    "trade-feed-aws-services-terminate:dev": "sh ./run_protected_playbook.sh dev \"ansible-playbook -e env_file=envs/dev/dev.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\"",
-    "trade-feed-aws-services-terminate:qa": "sh ./run_protected_playbook.sh qa \"ansible-playbook -e env_file=envs/qa/qa.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\"",
-    "trade-feed-aws-services-terminate:prod": "sh ./run_protected_playbook.sh prod \"ansible-playbook -e env_file=envs/prod/prod.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\""
+    "trade-feed-aws-services-terminate:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 \"ansible-playbook -e env_file=envs/dev/us-east-1.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\"",
+    "trade-feed-aws-services-terminate:qa-eu-west-1": "sh ./run_protected_playbook.sh qa-eu-west-1 \"ansible-playbook -e env_file=envs/qa/eu-west-1.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\"",
+    "trade-feed-aws-services-terminate:prod-ap-south-1": "sh ./run_protected_playbook.sh prod-ap-south-1 \"ansible-playbook -e env_file=envs/prod/ap-south-1.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\""
   }
 }

@@ -1,25 +1,25 @@
 ---
-- name: Generate test data for trades_data_ingestion_log
+- name: Generate test data for PostgreSQL
   hosts: localhost
   gather_facts: no
-  vars_files:
-    - "{{ env_file }}"
+
+  vars:
+    json_file_path: "{{ lookup('env', 'HOME') }}/trade-feed-etl-health-checker_{{ aws_region }}_{{ environment }}.json"
+    aws_credentials: "{{ lookup('file', json_file_path) | from_json }}"
 
   tasks:
-    - name: Install psycopg2
-      pip:
-        name: psycopg2-binary
+    - name: Generate test data
+      postgresql_db:
+        name: "trade_feed_db"
+        login_user: "{{ aws_credentials.db_master_username }}"
+        login_password: "{{ aws_credentials.db_master_password }}"
+        state: present
 
-    - name: Insert test data into the table
-      community.postgresql.postgresql_query:
-        db: "{{ db_name }}"
-        login_user: "{{ db_user }}"
-        login_password: "{{ db_password }}"
+    - name: Insert test data into trades_data_ingestion_log table
+      postgresql_query:
+        db: "trade_feed_db"
+        login_user: "{{ aws_credentials.db_master_username }}"
+        login_password: "{{ aws_credentials.db_master_password }}"
         query: |
-          INSERT INTO trades_data_ingestion_log (account_id, created, id, s3_bucket_location)
-          SELECT
-            md5(random()::text) AS account_id,
-            now() - interval '1 minute' * floor(random()*1000) AS created,
-            gen_random_uuid() AS id,
-            '{{ s3_bucket_base_url }}' || md5(random()::text) || '.csv' AS s3_bucket_location
-          FROM generate_series(1, {{ test_data_count }}) s(i);
+          INSERT INTO trades_data_ingestion_log (account_id, created, id, location)
+          VALUES (generate_series(1, 1000), now(), uuid_generate_v4(), 's3://bucket-name/trades');

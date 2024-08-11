@@ -1,29 +1,28 @@
 ---
-- name: Setup PostgreSQL Database in AWS and Create Table
+- name: Set up PostgreSQL database in AWS
   hosts: localhost
   gather_facts: no
-  vars_files:
-    - "{{ env_file }}"
+
+  vars:
+    json_file_path: "{{ lookup('env', 'HOME') }}/trade-feed-etl-health-checker_{{ aws_region }}_{{ environment }}.json"
+    aws_credentials: "{{ lookup('file', json_file_path) | from_json }}"
 
   tasks:
-    - name: Create PostgreSQL RDS instance
-      community.aws.rds_instance:
-        instance_name: "{{ db_instance_identifier }}"
-        db_name: "{{ db_name }}"
-        allocated_storage: "{{ db_allocated_storage }}"
-        db_instance_class: "{{ db_instance_class }}"
-        engine: "{{ db_engine }}"
-        master_username: "{{ db_user }}"
-        master_user_password: "{{ db_password }}"
-        db_subnet_group_name: "{{ db_subnet_group_name }}"
-        vpc_security_group_ids: "{{ vpc_security_group_ids }}"
-        state: present
-      environment:
-        AWS_PROFILE: "{{ aws_profile }}"
-
-    - name: Wait for the RDS instance to be available
-      community.aws.rds_instance:
-        instance_name: "{{ db_instance_identifier }}"
-        wait: yes
-      environment:
-        AWS_PROFILE: "{{ aws_profile }}"
+    - name: Create RDS PostgreSQL instance
+      rds:
+        command: create
+        id: "{{ environment }}-rds-instance"
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_credentials.aws_access_key_id }}"
+        aws_secret_key: "{{ aws_credentials.aws_secret_access_key }}"
+        db_instance_class: db.t2.micro
+        engine: postgres
+        allocated_storage: 20
+        master_username: "{{ aws_credentials.db_master_username }}"
+        master_password: "{{ aws_credentials.db_master_password }}"
+        db_name: "trade_feed_db"
+        multi_az: no
+        vpc_security_group_ids:
+          - sg-12345678
+        db_subnet_group_name: my-subnet-group
+        publicly_accessible: yes

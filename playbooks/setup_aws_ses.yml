@@ -1,0 +1,26 @@
+---
+- name: Set up AWS SES
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Verify an email address for SES
+      aws_ses_identity:
+        email: "{{ ses_email }}"
+        state: present
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+
+    - name: Create SES sending authorization policy (optional, for cross-account sending)
+      aws_ses_identity_policy:
+        email: "{{ ses_email }}"
+        policy_name: "SendEmailPolicy"
+        policy:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action: "ses:SendEmail"
+              Resource: "*"
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"

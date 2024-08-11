@@ -1,0 +1,22 @@
+---
+- name: Set up AWS EventBridge rule
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Create EventBridge rule
+      aws_eventbridge_rule:
+        name: "trade-feed-health-check"
+        schedule_expression: "rate(15 minutes)"
+        state: "ENABLED"
+        description: "Trigger Lambda function every 15 minutes to check file count."
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+
+    - name: Add Lambda target to the EventBridge rule
+      aws_eventbridge_target:
+        rule: "trade-feed-health-check"
+        arn: "{{ lambda_function_arn }}"
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"

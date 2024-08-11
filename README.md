@@ -21,6 +21,103 @@
 - **`validate_pwd_for_ansible_pb_run.py`**: A Python script that validates the password against encrypted data stored in the environment files.
 - **`package.json`**: Defines npm scripts to execute the playbooks and manage infrastructure across different environments.
 
+## Getting Started for Users
+
+If you're a user of the `trade-feed-etl-health-checker` codebase, follow these steps to set up your environment and start using the tools provided:
+
+### 1. **Ensure Required Tools Are Installed**
+
+Before you start, make sure you have the necessary tools installed on your system:
+
+- **jq**: A lightweight JSON processor.
+- **Ansible**: For running the playbooks.
+- **Python 3**: Required for password validation.
+- **AWS CLI**: For interacting with AWS services.
+- **npm**: For managing and executing scripts.
+
+Refer to the "Prerequisites" section in this `README.md` for installation instructions specific to your operating system.
+
+### 2. **Configure the JSON File in Your Home Directory**
+
+Create a JSON file named `trade-feed-etl-health-checker.json` in your home directory. This file stores the encryption keys and passwords for each environment:
+
+```bash
+touch ~/trade-feed-etl-health-checker.json
+
+```
+
+Add the following content to the JSON file, replacing the keys and passwords with your actual values:
+
+```json
+{
+  "dev": {
+    "key": "your-dev-encryption-key",
+    "password": "your-dev-password"
+  },
+  "qa": {
+    "key": "your-qa-encryption-key",
+    "password": "your-qa-password"
+  },
+  "prod": {
+    "key": "your-prod-encryption-key",
+    "password": "your-prod-password"
+  },
+  "pre-prod": {
+    "key": "your-pre-prod-encryption-key",
+    "password": "your-pre-prod-password"
+  },
+  "demo": {
+    "key": "your-demo-encryption-key",
+    "password": "your-demo-password"
+  }
+}
+
+```
+
+### 3. **(Optional) Update the password.enc Files**
+
+If you need to update the password.enc files for any environment (e.g., after changing the encryption key or password), you can do so using the following command:
+
+```shell
+echo -n "your-new-password" | openssl enc -aes-256-cbc -a -salt -pass pass:your-new-encryption-key -out envs/<environment>/password.enc
+
+```
+
+Replace <environment> with the appropriate environment name (dev, prod, etc.), and use the new encryption key and password that match the updated values in your trade-feed-etl-health-checker.json file.
+
+
+### 4. **Run the Playbooks Using npm**
+
+With your environment set up and the necessary tools installed, you can now run the provided Ansible playbooks using npm. Here are some common commands you might use:
+
+Set Up the PostgreSQL Database in Dev:
+
+```shell
+npm run trade-feed-dl-db-setup:dev-us-east-1
+```
+
+Generate Test Data in Dev:
+
+```shell
+npm run trade-feed-test-data-generate:dev-us-east-1
+
+```
+
+```shell
+npm run trade-feed-aws-services-setup:dev-us-east-1
+```
+
+Terminate Infrastructure in Dev:
+
+```shell
+npm run trade-feed-dl-db-terminate:dev-us-east-1
+npm run trade-feed-aws-services-terminate:dev-us-east-1
+```
+
+### 5. **Contribute to the Project**
+
+If you wish to contribute, please fork the repository, create a new branch, and submit a pull request. Ensure that your contributions adhere to the existing code style and pass all tests.
+
 ## Prerequisites
 
 - **Git Bash or PowerShell**: For running shell scripts on Windows, use Git Bash or PowerShell.
