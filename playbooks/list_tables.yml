@@ -1,0 +1,45 @@
+---
+- name: List tables in PostgreSQL database
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  collections:
+    - amazon.aws
+    - community.postgresql
+
+  vars:
+    # Load values from the JSON file in the user's home directory
+    json_data: "{{ lookup('file', json_file_path) | from_json }}"
+
+    aws_region: "{{ json_data.aws_region | default('us-east-1') }}"
+    db_instance_identifier: "{{ json_data.db_instance_identifier | default('default-postgres-instance') }}"
+    db_name: "{{ json_data.db_name | default('defaultdatabase') }}"
+    db_endpoint: "{{ json_data.db_endpoint | default('default-db-endpoint') }}"
+    db_port: "{{ json_data.db_port | default(5432) }}"
+    db_user: "{{ json_data.master_username | default('defaultuser') }}"
+    db_password: "{{ json_data.master_user_password | default('defaultpassword') }}"
+    
+  tasks:
+    - name: Print important values
+      debug:
+        msg:
+          - "AWS Region: {{ aws_region }}"
+          - "DB Instance Identifier: {{ db_instance_identifier }}"
+          - "DB Name: {{ db_name }}"
+          - "DB Endpoint: {{ db_endpoint }}"
+          - "Master Username: {{ db_user }}"
+
+    - name: Connect to PostgreSQL and list tables
+      community.postgresql.postgresql_query:
+        db: "{{ db_name }}"
+        query: "SELECT tablename FROM pg_tables WHERE schemaname = 'public';"
+        login_host: "{{ db_endpoint }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        port: "{{ db_port }}"
+      register: table_list
+
+    - name: Print the list of tables
+      debug:
+        msg: "{{ table_list.query_result }}"

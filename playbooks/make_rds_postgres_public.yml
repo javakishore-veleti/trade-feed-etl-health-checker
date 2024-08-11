@@ -1,0 +1,67 @@
+---
+- name: Make RDS PostgreSQL Publicly Accessible
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  collections:
+    - amazon.aws
+
+  vars:
+    # Load values from the JSON file in the user's home directory
+    json_data: "{{ lookup('file', json_file_path) | from_json }}"
+
+    aws_region: "{{ json_data.aws_region | default('us-east-1') }}"
+    aws_access_key: "{{ json_data.aws_access_key_id | default('your-default-access-key') }}"
+    aws_secret_key: "{{ json_data.aws_secret_access_key | default('your-default-secret-key') }}"
+    db_instance_identifier: "{{ json_data.db_instance_identifier | default('default-postgres-instance') }}"
+    db_subnet_group_name: "{{ json_data.db_subnet_group_name | default('default-subnet-group') }}"
+    cidr_ip: "{{ json_data.cidr_ip | default('0.0.0.0/0') }}"
+    
+  tasks:
+    - name: Print important values
+      debug:
+        msg:
+          - "AWS Region: {{ aws_region }}"
+          - "DB Instance Identifier: {{ db_instance_identifier }}"
+          - "Allowed CIDR IP: {{ cidr_ip }}"
+
+    - name: Modify RDS instance to be publicly accessible
+      amazon.aws.rds_instance:
+        db_instance_identifier: "{{ db_instance_identifier }}"
+        publicly_accessible: true
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        state: present
+
+    - name: Get the VPC security group details
+      amazon.aws.ec2_group_info:
+        filters:
+          "group-id": "{{ json_data.vpc_security_group_ids | default([]) }}"
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+      register: security_group_info
+
+    - name: Update security group to allow inbound traffic on port 5432
+      amazon.aws.ec2_security_group:
+        group_id: "{{ item.group_id }}"
+        name: "{{ item.group_name }}"
+        description: "{{ item.description }}"
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        rules:
+          - proto: tcp
+            from_port: 5432
+            to_port: 5432
+            cidr_ip: "{{ cidr_ip }}"
+        state: present
+      loop: "{{ security_group_info.security_groups }}"
+      loop_control:
+        loop_var: item
+
+    - name: Print final status
+      debug:
+        msg: "The RDS instance {{ db_instance_identifier }} is now publicly accessible. Inbound traffic on port 5432 is allowed from {{ cidr_ip }}."

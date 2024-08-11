@@ -1,15 +1,15 @@
 {
     "dev": {
-      "key": "your-dev-encryption-key",
-      "password": "your-dev-password"
+      "key": "U2FsdGVkX18Bp95/s8Wv/EuKpWbsO55S4bZNxssIWuHcmtJm7OH3Tfu3iiKe39zx",
+      "password": "U2FsdGVkX18Bp95/s8Wv/EuKpWbsO55S4bZNxssIWuHcmtJm7OH3Tfu3iiKe39zx",
     },
     "qa": {
-      "key": "your-qa-encryption-key",
-      "password": "your-qa-password"
+      "key": "U2FsdGVkX18Bp95/s8Wv/EuKpWbsO55S4bZNxssIWuHcmtJm7OH3Tfu3iiKe39zx",
+      "password": "U2FsdGVkX18Bp95/s8Wv/EuKpWbsO55S4bZNxssIWuHcmtJm7OH3Tfu3iiKe39zx",
     },
     "prod": {
-      "key": "your-prod-encryption-key",
-      "password": "your-prod-password"
+      "key": "U2FsdGVkX18Bp95/s8Wv/EuKpWbsO55S4bZNxssIWuHcmtJm7OH3Tfu3iiKe39zx",
+      "password": "U2FsdGVkX18Bp95/s8Wv/EuKpWbsO55S4bZNxssIWuHcmtJm7OH3Tfu3iiKe39zx"
     }
   }
   

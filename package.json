@@ -22,6 +22,19 @@
 
     "trade-feed-aws-services-terminate:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 \"ansible-playbook -e env_file=envs/dev/us-east-1.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\"",
     "trade-feed-aws-services-terminate:qa-eu-west-1": "sh ./run_protected_playbook.sh qa-eu-west-1 \"ansible-playbook -e env_file=envs/qa/eu-west-1.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\"",
-    "trade-feed-aws-services-terminate:prod-ap-south-1": "sh ./run_protected_playbook.sh prod-ap-south-1 \"ansible-playbook -e env_file=envs/prod/ap-south-1.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\""
+    "trade-feed-aws-services-terminate:prod-ap-south-1": "sh ./run_protected_playbook.sh prod-ap-south-1 \"ansible-playbook -e env_file=envs/prod/ap-south-1.yml playbooks/terminate_infrastructure.yml -e rds_terminate=false -e lambda_terminate=true -e eventbridge_terminate=true\"",
+    "trade-feed-list-tables:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 playbooks/list_tables.yml",
+    "trade-feed-list-tables:qa-eu-west-1": "sh ./run_protected_playbook.sh qa-eu-west-1 playbooks/list_tables.yml",
+    "trade-feed-list-tables:prod-ap-south-1": "sh ./run_protected_playbook.sh prod-ap-south-1 playbooks/list_tables.yml",
+    "make-rds-public:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 playbooks/make_rds_postgres_public.yml",
+    "make-rds-public:qa-us-west-2": "sh ./run_protected_playbook.sh qa-us-west-2 playbooks/make_rds_postgres_public.yml",
+    "make-rds-public:prod-eu-central-1": "sh ./run_protected_playbook.sh prod-eu-central-1 playbooks/make_rds_postgres_public.yml",
+
+    "create-db-scripts-log-table:dev": "sh ./run_protected_playbook.sh dev-us-east-1 playbooks/create_db_scripts_exec_log_table.yml",
+    "create-db-scripts-log-table:prod": "sh ./run_protected_playbook.sh prod-us-west-2 playbooks/create_db_scripts_exec_log_table.yml",
+
+    "execute-sql-scripts:dev": "sh ./run_protected_playbook.sh dev-us-east-1 playbooks/execute_sql_scripts.yml",
+    "execute-sql-scripts:prod": "sh ./run_protected_playbook.sh prod-us-west-2 playbooks/execute_sql_scripts.yml"
+}
   }
 }

@@ -1,0 +1,39 @@
+---
+- name: Create db_scripts_exec_log Table
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  collections:
+    - community.postgresql
+
+  vars:
+    # Load values from the JSON file in the user's home directory
+    json_data: "{{ lookup('file', json_file_path) | from_json }}"
+
+    db_endpoint: "{{ json_data.db_endpoint | default('default-db-endpoint') }}"
+    db_name: "{{ json_data.db_name | default('defaultdatabase') }}"
+    db_user: "{{ json_data.master_username | default('defaultuser') }}"
+    db_password: "{{ json_data.master_user_password | default('defaultpassword') }}"
+    db_port: "{{ json_data.db_port | default(5432) }}"
+
+  tasks:
+    - name: Create db_scripts_exec_log table
+      community.postgresql.postgresql_query:
+        db: "{{ db_name }}"
+        query: |
+          CREATE TABLE IF NOT EXISTS db_scripts_exec_log (
+            id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            file_name TEXT UNIQUE NOT NULL,
+            file_size BIGINT NOT NULL,
+            file_created_dt TIMESTAMP NOT NULL,
+            md5_value TEXT GENERATED ALWAYS AS (md5(file_name || file_size || file_created_dt::text)),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT DEFAULT CURRENT_USER,
+            updated_by TEXT DEFAULT CURRENT_USER
+          );
+        login_host: "{{ db_endpoint }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        port: "{{ db_port }}"

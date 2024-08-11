@@ -12,27 +12,51 @@
     json_data: "{{ lookup('file', json_file_path) | from_json }}"
     
     aws_region: "{{ json_data.aws_region | default('us-east-1') }}"
-    vpc_security_group_ids: "{{ json_data.vpc_security_group_ids | default([]) }}"
+    aws_access_key: "{{ json_data.aws_access_key_id | default('your-default-access-key') }}"
+    aws_secret_key: "{{ json_data.aws_secret_access_key | default('your-default-secret-key') }}"
     master_username: "{{ json_data.master_username | default('defaultuser') }}"
     master_user_password: "{{ json_data.master_user_password | default('defaultpassword') }}"
-
-    db_instance_identifier: "{{ lookup('vars', 'db_instance_identifier', default='default-postgres-instance') }}"
-    db_name: "{{ lookup('vars', 'db_name', default='defaultdatabase') }}"
-    allocated_storage: "{{ lookup('vars', 'allocated_storage', default=20) }}"
-    db_instance_class: "{{ lookup('vars', 'db_instance_class', default='db.t2.micro') }}"
+    
+    db_instance_identifier: "{{ json_data.db_instance_identifier | default('default-postgres-instance') }}"
+    db_name: "{{ json_data.db_name | default('defaultdatabase') }}"
+    allocated_storage: "{{ json_data.db_allocated_storage | default(20) }}"
+    db_instance_class: "{{ json_data.db_instance_class | default('db.t3.medium') }}"
+    db_engine: "{{ json_data.db_engine | default('postgres') }}"
+    db_engine_version: "{{ json_data.db_engine_version | default('15.5') }}"  # Updated to use PostgreSQL 15.5
+    db_subnet_group_name: "{{ json_data.db_subnet_group_name | default('default-subnet-group') }}"
+    vpc_security_group_ids: "{{ json_data.vpc_security_group_ids | default(['default-security-group']) }}"
+    aws_debug: "{{ json_data.aws_debug | default(false) }}"
 
   tasks:
+    - name: Print important values
+      debug:
+        msg:
+          - "AWS Region: {{ aws_region }}"
+          - "DB Instance Identifier: {{ db_instance_identifier }}"
+          - "DB Name: {{ db_name }}"
+          - "Allocated Storage: {{ allocated_storage }} GB"
+          - "DB Instance Class: {{ db_instance_class }}"
+          - "DB Engine: {{ db_engine }}"
+          - "DB Engine Version: {{ db_engine_version }}"
+          - "Subnet Group: {{ db_subnet_group_name }}"
+          - "Security Groups: {{ vpc_security_group_ids }}"
+
     - name: Create RDS PostgreSQL instance
-      amazon.aws.rds:
+      amazon.aws.rds_instance:
         db_instance_identifier: "{{ db_instance_identifier }}"
         db_name: "{{ db_name }}"
-        engine: postgres
-        master_username: "{{ master_username }}"
-        master_user_password: "{{ master_user_password }}"
+        engine: "{{ db_engine }}"
+        engine_version: "{{ db_engine_version }}"
+        username: "{{ master_username }}"
+        password: "{{ master_user_password }}"
         allocated_storage: "{{ allocated_storage }}"
-        db_instance_class: "{{ db_instance_class }}"
+        instance_type: "{{ db_instance_class }}"
+        db_subnet_group_name: "{{ db_subnet_group_name }}"
         vpc_security_group_ids: "{{ vpc_security_group_ids }}"
         state: present
         region: "{{ aws_region }}"
-        aws_access_key: "{{ json_data.aws_access_key_id | default(lookup('env', 'AWS_ACCESS_KEY_ID')) }}"
-        aws_secret_key: "{{ json_data.aws_secret_access_key | default(lookup('env', 'AWS_SECRET_ACCESS_KEY')) }}"
+        wait: true
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+      environment:
+        ANSIBLE_DEBUG_BOTOCORE_LOGS: "{{ '1' if aws_debug | bool else '0' }}"

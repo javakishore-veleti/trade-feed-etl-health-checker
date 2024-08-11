@@ -1,0 +1,22 @@
+{
+  "ses_email": "youremail@enauk.com",
+  "key": "U2FsdGVkX18Bp95/s8Wv/EuKpWbsO55S4bZNxssIWuHcmtJm7OH3Tfu3iiKe39zx",
+  "password": "U2FsdGVkX18Bp95/s8Wv/EuKpWbsO55S4bZNxssIWuHcmtJm7OH3Tfu3iiKe39zx",
+  "aws_access_key_id": "AKIAdfafdsafdsafdsf",
+  "aws_secret_access_key": "CDYEdfadsfdsafdsafdsfd",
+  "aws_region": "us-east-1",
+  "aws_profile": "trade-feed-etl-dev-profile",
+  "db_instance_identifier": "dev-trade-feed-db",
+  "db_name": "trade_feed_db",
+  "db_user": "trade_feed_db_user",
+  "db_password": "trade_feed_db_password_1!",
+  "db_instance_class": "db.t3.medium",
+  "db_engine": "postgres",
+  "db_allocated_storage": 20,
+  "db_subnet_group_name": "default-vpc-fdafdsafds",
+  "vpc_security_group_ids": ["sg-fdfafafd"],
+  "master_username": "trade_feed_db_user",
+  "master_user_password": "trade_feed_db_master_user_password",
+  "allocated_storage": 20,
+  "aws_debug": true
+}

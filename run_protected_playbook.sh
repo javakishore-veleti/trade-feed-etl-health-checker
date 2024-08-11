@@ -72,7 +72,7 @@ else
 fi
 
 # Correctly structure the ansible-playbook command
-ANSIBLE_CMD="ansible-playbook -e aws_region=${AWS_REGION} -e environment=${ENVIRONMENT} -e json_file_path=${JSON_FILE} $PLAYBOOK_COMMAND"
+ANSIBLE_CMD="ansible-playbook -e aws_region=${AWS_REGION} -e environment=${ENVIRONMENT} -e json_file_path=${JSON_FILE} $PLAYBOOK_COMMAND -vvv"
 
 # Execute the ansible-playbook command
 echo "Running: $ANSIBLE_CMD"

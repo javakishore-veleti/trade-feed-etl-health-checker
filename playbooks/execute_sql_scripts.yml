@@ -1,0 +1,40 @@
+---
+- name: Create Pre-defined Tables and Execute DML SQL Statements
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  collections:
+    - community.postgresql
+
+  vars:
+    # Load values from the JSON file in the user's home directory
+    json_data: "{{ lookup('file', json_file_path) | from_json }}"
+    sql_scripts_dir: "{{ json_data.sql_scripts_dir | default('sql_scripts') }}"
+
+    db_endpoint: "{{ json_data.db_endpoint | default('default-db-endpoint') }}"
+    db_name: "{{ json_data.db_name | default('defaultdatabase') }}"
+    db_user: "{{ json_data.master_username | default('defaultuser') }}"
+    db_password: "{{ json_data.master_user_password | default('defaultpassword') }}"
+    db_port: "{{ json_data.db_port | default(5432) }}"
+
+  tasks:
+    - name: Find SQL scripts
+      find:
+        paths: "{{ sql_scripts_dir }}"
+        patterns: "*.sql"
+        recurse: yes
+        sort: name
+      register: found_scripts
+
+    - name: Execute SQL scripts in order
+      community.postgresql.postgresql_query:
+        db: "{{ db_name }}"
+        query: "{{ lookup('file', item.path) }}"
+        login_host: "{{ db_endpoint }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        port: "{{ db_port }}"
+      loop: "{{ found_scripts.files }}"
+      loop_control:
+        label: "{{ item.path }}"
