@@ -15,12 +15,28 @@
     aws_region: "{{ json_data.aws_region | default('us-east-1') }}"
     db_instance_identifier: "{{ json_data.db_instance_identifier | default('default-postgres-instance') }}"
     db_name: "{{ json_data.db_name | default('defaultdatabase') }}"
-    db_endpoint: "{{ json_data.db_endpoint | default('default-db-endpoint') }}"
     db_port: "{{ json_data.db_port | default(5432) }}"
     db_user: "{{ json_data.master_username | default('defaultuser') }}"
     db_password: "{{ json_data.master_user_password | default('defaultpassword') }}"
     
   tasks:
+    - name: Determine the db_endpoint for the RDS instance
+      command: >
+        aws rds describe-db-instances
+        --region "{{ aws_region }}"
+        --query "DBInstances[?DBName=='{{ db_name }}'].Endpoint.Address | [0]"
+        --output text
+      register: rds_endpoint
+
+    - name: Fail if the DB endpoint was not found
+      fail:
+        msg: "The DB endpoint could not be determined for the database '{{ db_name }}'. Ensure the database exists and is accessible."
+      when: rds_endpoint.stdout == ""
+
+    - name: Set db_endpoint variable
+      set_fact:
+        db_endpoint: "{{ rds_endpoint.stdout }}"
+
     - name: Print important values
       debug:
         msg:

@@ -10,28 +10,46 @@
   vars:
     json_data: "{{ lookup('file', json_file_path) | from_json }}"
     aws_region: "{{ json_data.aws_region | default('us-east-1') }}"
-    aws_access_key: "{{ json_data.aws_access_key_id }}"
-    aws_secret_key: "{{ json_data.aws_secret_access_key }}"
-    db_instance_identifier: "{{ json_data.db_instance_identifier | default('dev-trade-feed-db') }}"
     db_name: "{{ json_data.db_name | default('trade_feed_db') }}"
-    sql_scripts_dir: "db_scripts/postgres_db/changeset"
+    sql_scripts_dir: "{{ json_data.sql_scripts_dir | default('../db_scripts/postgres_db/changeset') }}"
+    db_user: "{{ json_data.master_username }}"
+    db_password: "{{ json_data.master_user_password }}"
 
   tasks:
-    - name: Check if the RDS instance exists
-      amazon.aws.rds_instance_info:
-        region: "{{ aws_region }}"
-        db_instance_identifier: "{{ db_instance_identifier }}"
-      register: rds_info
-      ignore_errors: true
+    - name: Determine the db_instance_identifier for the RDS instance
+      command: >
+        aws rds describe-db-instances
+        --region "{{ aws_region }}"
+        --query "DBInstances[?DBName=='{{ db_name }}'].DBInstanceIdentifier | [0]"
+        --output text
+      register: db_instance_identifier_result
 
-    - name: Fail if RDS instance does not exist
+    - name: Fail if the DB instance identifier was not found
       fail:
-        msg: "The RDS instance '{{ db_instance_identifier }}' does not exist. Please create the database instance first."
-      when: rds_info.db_instances is not defined or rds_info.db_instances | length == 0
+        msg: "The DB instance identifier could not be determined for the database '{{ db_name }}'. Ensure the database exists and is accessible."
+      when: db_instance_identifier_result.stdout == ""
 
-    - name: Set db_endpoint fact
+    - name: Set db_instance_identifier variable
       set_fact:
-        db_endpoint: "{{ rds_info.db_instances[0].endpoint['Address'] }}"
+        db_instance_identifier: "{{ db_instance_identifier_result.stdout }}"
+
+    - name: Determine the db_endpoint for the RDS instance
+      command: >
+        aws rds describe-db-instances
+        --db-instance-identifier "{{ db_instance_identifier }}"
+        --region "{{ aws_region }}"
+        --query "DBInstances[0].Endpoint.Address"
+        --output text
+      register: rds_endpoint
+
+    - name: Fail if the DB endpoint was not found
+      fail:
+        msg: "The DB endpoint could not be determined for the instance identifier '{{ db_instance_identifier }}'. Ensure the database instance exists and is accessible."
+      when: rds_endpoint.stdout == ""
+
+    - name: Set db_endpoint variable
+      set_fact:
+        db_endpoint: "{{ rds_endpoint.stdout }}"
 
     - name: Print important values
       debug:
@@ -40,6 +58,7 @@
           - "DB Instance Identifier: {{ db_instance_identifier }}"
           - "DB Name: {{ db_name }}"
           - "DB Endpoint: {{ db_endpoint }}"
+          - "SQL Scripts Directory: {{ sql_scripts_dir }}"
 
     - name: Find all SQL scripts
       find:
@@ -48,14 +67,35 @@
         recurse: yes
       register: found_scripts
 
-    - name: Execute SQL scripts
-      community.postgresql.postgresql_query:
-        db: "{{ db_name }}"
-        login_host: "{{ db_endpoint }}"
-        login_user: "{{ json_data.master_username }}"
-        login_password: "{{ json_data.master_user_password }}"
-        port: 5432
-        query: "{{ lookup('file', item.path) }}"
-      loop: "{{ found_scripts.files }}"
+    - name: Check if the script file has already been executed
+      shell: |
+        PGPASSWORD={{ db_password }} psql -h {{ db_endpoint }} -U {{ db_user }} -d {{ db_name }} -t -c "SELECT COUNT(*) FROM db_scripts_exec_log WHERE file_name = '{{ item.path | basename }}';"
+      register: script_check
+      with_items: "{{ found_scripts.files }}"
+      changed_when: false
+
+    - name: Check if the script execution count is valid
+      fail:
+        msg: "The script check did not return a valid count for '{{ item.path | basename }}'."
+      when: script_check.results[found_scripts.files.index(item)].stdout | trim == "" or script_check.results[found_scripts.files.index(item)].stdout is not match('^\s*\d+\s*$')
+      with_items: "{{ found_scripts.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Execute the SQL script if it hasn't been executed
+      shell: |
+        PGPASSWORD={{ db_password }} psql -h {{ db_endpoint }} -U {{ db_user }} -d {{ db_name }} -f {{ item.path }}
+      when: script_check.results[found_scripts.files.index(item)].stdout | trim | int == 0
+      with_items: "{{ found_scripts.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Insert record into db_scripts_exec_log
+      shell: |
+        PGPASSWORD={{ db_password }} psql -h {{ db_endpoint }} -U {{ db_user }} -d {{ db_name }} -c "
+        INSERT INTO db_scripts_exec_log (file_name, file_size, file_created_dt)
+        VALUES ('{{ item.path | basename }}', '{{ item.size }}', to_timestamp({{ item.mtime }}));"
+      when: script_check.results[found_scripts.files.index(item)].stdout | trim | int == 0
+      with_items: "{{ found_scripts.files }}"
       loop_control:
         label: "{{ item.path }}"

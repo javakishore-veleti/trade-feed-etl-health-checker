@@ -190,20 +190,23 @@ npm run trade-feed-dl-db-setup:dev-us-east-1
 # Generate Test Data in Dev Environment
 npm run trade-feed-test-data-generate:dev-us-east-1
 
-# Set Up AWS Services in Dev Environment
-npm run trade-feed-aws-services-setup:dev-us-east-1
-
 # Make RDS PostgreSQL Public in Dev Environment
 npm run make-rds-public:dev-us-east-1
+
+# Create DB Scripts Execution Log Table in Dev Environment
+npm run create-db-scripts-log-table:dev-us-east-1
 
 # List Tables in PostgreSQL Database for Dev Environment
 npm run trade-feed-list-tables:dev-us-east-1
 
-# Create DB Scripts Execution Log Table in Dev Environment
-npm run create-db-scripts-log-table:dev
-
 # Execute SQL Scripts in Dev Environment
-npm run execute-sql-scripts:dev
+npm run execute-sql-scripts:dev-us-east-1
+
+# List Tables in PostgreSQL Database for Dev Environment
+npm run trade-feed-list-tables:dev-us-east-1
+
+# Setup AWS Event Bridge Lambda AWS SES
+npm run setup-postgres-eventbridge-lambda-ses:dev-us-east-1
 
 # Terminate PostgreSQL Database in Dev Environment
 npm run trade-feed-dl-db-terminate:dev-us-east-1

@@ -1,5 +1,5 @@
 ---
-- name: Create db_scripts_exec_log Table
+- name: Create db_scripts_exec_log Table and Trigger
   hosts: localhost
   connection: local
   gather_facts: no
@@ -11,13 +11,29 @@
     # Load values from the JSON file in the user's home directory
     json_data: "{{ lookup('file', json_file_path) | from_json }}"
 
-    db_endpoint: "{{ json_data.db_endpoint | default('default-db-endpoint') }}"
     db_name: "{{ json_data.db_name | default('defaultdatabase') }}"
     db_user: "{{ json_data.master_username | default('defaultuser') }}"
     db_password: "{{ json_data.master_user_password | default('defaultpassword') }}"
     db_port: "{{ json_data.db_port | default(5432) }}"
 
   tasks:
+    - name: Determine the db_endpoint for the RDS instance
+      command: >
+        aws rds describe-db-instances
+        --region "{{ json_data.aws_region | default('us-east-1') }}"
+        --query "DBInstances[?DBName=='{{ db_name }}'].Endpoint.Address | [0]"
+        --output text
+      register: rds_endpoint
+
+    - name: Fail if the DB endpoint was not found
+      fail:
+        msg: "The DB endpoint could not be determined for the database '{{ db_name }}'. Ensure the database exists and is accessible."
+      when: rds_endpoint.stdout == ""
+
+    - name: Set db_endpoint variable
+      set_fact:
+        db_endpoint: "{{ rds_endpoint.stdout }}"
+
     - name: Create db_scripts_exec_log table
       community.postgresql.postgresql_query:
         db: "{{ db_name }}"
@@ -27,12 +43,41 @@
             file_name TEXT UNIQUE NOT NULL,
             file_size BIGINT NOT NULL,
             file_created_dt TIMESTAMP NOT NULL,
-            md5_value TEXT GENERATED ALWAYS AS (md5(file_name || file_size || file_created_dt::text)),
+            md5_value TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             created_by TEXT DEFAULT CURRENT_USER,
             updated_by TEXT DEFAULT CURRENT_USER
           );
+        login_host: "{{ db_endpoint }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        port: "{{ db_port }}"
+
+    - name: Create trigger function to calculate MD5 hash
+      community.postgresql.postgresql_query:
+        db: "{{ db_name }}"
+        query: |
+          CREATE OR REPLACE FUNCTION update_md5_value()
+          RETURNS TRIGGER AS $$
+          BEGIN
+            NEW.md5_value := md5(NEW.file_name || NEW.file_size || NEW.file_created_dt::text);
+            RETURN NEW;
+          END;
+          $$ LANGUAGE plpgsql;
+        login_host: "{{ db_endpoint }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        port: "{{ db_port }}"
+
+    - name: Create trigger to update MD5 value on insert or update
+      community.postgresql.postgresql_query:
+        db: "{{ db_name }}"
+        query: |
+          CREATE TRIGGER trg_update_md5_value
+          BEFORE INSERT OR UPDATE ON db_scripts_exec_log
+          FOR EACH ROW
+          EXECUTE FUNCTION update_md5_value();
         login_host: "{{ db_endpoint }}"
         login_user: "{{ db_user }}"
         login_password: "{{ db_password }}"
