@@ -1,10 +1,37 @@
 # group_vars/all/defaults.yml
 sql_scripts_dir: "../db_scripts/postgres_db/changeset"
-db_endpoint: "default-db-endpoint"
+
+# Default configuration for the trade-feed-etl-health-checker environment
+
+# AWS Configuration
+aws_region: "us-east-1"
+aws_access_key: "your-aws-access-key"
+aws_secret_key: "your-aws-secret-key"
+aws_session_token: "your-aws-session-token"  # Optional, remove if not using session tokens
+aws_profile: "default"
+
+# PostgreSQL Database Configuration
+db_instance_identifier: "dev-trade-feed-db"
 db_name: "trade_feed_db"
 db_user: "trade_feed_db_user"
 db_password: "trade_feed_db_password_1"
+db_endpoint: "default-db-endpoint"
 db_port: 5432
 db_instance_class: "db.t3.medium"
-db_engine": "postgres"
+db_engine: "postgres"
 db_allocated_storage: 20
+db_subnet_group_name: "your-subnet-group"
+vpc_security_group_ids: ["your-security-group-id"]
+
+# AWS EventBridge Configuration
+db_eventbridge_rule: "trade-feed-db-event-rule"
+eventbridge_schedule_expression: "rate(15 minutes)"
+
+# AWS SES Configuration
+ses_email: "your-verified-email@example.com"
+
+# AWS Lambda Configuration
+lambda_function_name: "lambda_fn_trade_feed_tables_counts_checker"
+
+# Other configurations
+aws_debug: false

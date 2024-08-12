@@ -1,0 +1,117 @@
+- name: Setup PostgreSQL, EventBridge, Lambda, and SES with Monitoring
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    # Load values from the JSON file
+    json_data: "{{ lookup('file', json_file_path) | from_json }}"
+    
+    # AWS and Database configuration variables
+    aws_region: "{{ json_data.aws_region | default('us-east-1') }}"
+    aws_access_key: "{{ json_data.aws_access_key_id }}"
+    aws_secret_key: "{{ json_data.aws_secret_access_key }}"
+    db_instance_identifier: "{{ json_data.db_instance_identifier | default('dev-trade-feed-db') }}"
+    db_name: "{{ json_data.db_name | default('trade_feed_db') }}"
+    db_endpoint: "{{ json_data.db_endpoint | default('default-db-endpoint') }}"
+    db_port: "{{ json_data.db_port | default(5432) }}"
+    db_user: "{{ json_data.master_username | default('defaultuser') }}"
+    db_password: "{{ json_data.master_user_password | default('defaultpassword') }}"
+    db_eventbridge_rule: "{{ json_data.db_eventbridge_rule | default('trade-feed-db-event-rule') }}"
+    eventbridge_schedule_expression: "{{ json_data.eventbridge_schedule_expression | default('rate(15 minutes)') }}"
+    lambda_function_name: "{{ json_data.lambda_function_name | default('lambda_fn_trade_feed_tables_counts_checker') }}"
+    ses_email: "{{ json_data.ses_email | default('your-verified-email@example.com') }}"
+
+  tasks:
+
+    - name: Print important values
+      debug:
+        msg: "Region: {{ aws_region }}, DB Endpoint: {{ db_endpoint }}, EventBridge Rule: {{ db_eventbridge_rule }}, SES Email: {{ ses_email }}"
+
+    - name: Check if the RDS instance exists
+      command: >
+        aws rds describe-db-instances
+        --db-instance-identifier "{{ db_instance_identifier }}"
+        --region "{{ aws_region }}"
+        --output json
+      register: rds_info
+      ignore_errors: yes
+
+    - name: Fail if RDS instance does not exist
+      fail:
+        msg: "RDS instance '{{ db_instance_identifier }}' does not exist in region '{{ aws_region }}'. Please create the RDS instance before running this playbook."
+      when: "'DBInstanceNotFound' in rds_info.stderr"
+
+    - name: Ensure RDS instance is available
+      command: >
+        aws rds describe-db-instances
+        --db-instance-identifier "{{ db_instance_identifier }}"
+        --region "{{ aws_region }}"
+        --output json
+      register: rds_availability
+      until: "'DBInstanceStatus': 'available' in rds_availability.stdout"
+      retries: 5
+      delay: 60
+      when: "'DBInstanceNotFound' not in rds_info.stderr"
+
+    - name: Check if EventBridge rule exists
+      command: >
+        aws events describe-rule
+        --name "{{ db_eventbridge_rule }}"
+        --region "{{ aws_region }}"
+      register: eventbridge_check
+      ignore_errors: yes
+
+    - name: Ensure EventBridge rule is set up
+      command: >
+        aws events put-rule
+        --name "{{ db_eventbridge_rule }}"
+        --schedule-expression "{{ eventbridge_schedule_expression }}"
+        --region "{{ aws_region }}"
+      register: eventbridge_info
+      when: "'ResourceNotFoundException' in eventbridge_check.stderr"
+
+    - name: Check if Lambda function exists
+      command: >
+        aws lambda get-function
+        --function-name "{{ lambda_function_name }}"
+        --region "{{ aws_region }}"
+      register: lambda_check
+      ignore_errors: yes
+
+    - name: Ensure Lambda function is set up
+      command: >
+        aws lambda create-function
+        --function-name "{{ lambda_function_name }}"
+        --region "{{ aws_region }}"
+        --handler "index.handler"
+        --runtime "python3.8"
+        --role "arn:aws:iam::your-account-id:role/your-lambda-execution-role"
+        --zip-file "fileb://your-deployment-package.zip"
+      register: lambda_info
+      when: "'ResourceNotFoundException' in lambda_check.stderr"
+
+    - name: Check if SES identity is verified
+      command: >
+        aws ses get-identity-verification-attributes
+        --identities "{{ ses_email }}"
+        --region "{{ aws_region }}"
+      register: ses_info
+      ignore_errors: yes
+
+    - name: Ensure SES identity is verified
+      command: >
+        aws ses verify-email-identity
+        --email-address "{{ ses_email }}"
+        --region "{{ aws_region }}"
+      when: "'VerificationStatus' not in ses_info.stdout"
+
+    - name: Attach EventBridge rule to Lambda target
+      command: >
+        aws events put-targets
+        --rule "{{ db_eventbridge_rule }}"
+        --targets "Id"="1","Arn"="{{ lambda_info.stdout }}"
+        --region "{{ aws_region }}"
+      register: target_attach_info
+      failed_when: "'FailedEntryCount' > 0 in target_attach_info.stdout"
+      when: "'ResourceNotFoundException' in eventbridge_check.stderr"

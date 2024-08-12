@@ -35,6 +35,10 @@
     "create-db-scripts-log-table:prod-us-west-2": "sh ./run_protected_playbook.sh prod-us-west-2 playbooks/create_db_scripts_exec_log_table.yml",
 
     "execute-sql-scripts:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 playbooks/execute_sql_scripts.yml",
-    "execute-sql-scripts:prod-us-west-2": "sh ./run_protected_playbook.sh prod-us-west-2 playbooks/execute_sql_scripts.yml"
+    "execute-sql-scripts:prod-us-west-2": "sh ./run_protected_playbook.sh prod-us-west-2 playbooks/execute_sql_scripts.yml",
+
+    "setup-postgres-eventbridge-lambda-ses:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 playbooks/postgres_db_pool_eventbridge_lambda_ses.yml",
+    "setup-postgres-eventbridge-lambda-ses:qa-eu-west-1": "sh ./run_protected_playbook.sh qa-eu-west-1 playbooks/postgres_db_pool_eventbridge_lambda_ses.yml",
+    "setup-postgres-eventbridge-lambda-ses:prod-ap-south-1": "sh ./run_protected_playbook.sh prod-ap-south-1 playbooks/postgres_db_pool_eventbridge_lambda_ses.yml"
   }
 }
