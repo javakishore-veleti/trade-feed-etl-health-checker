@@ -1,0 +1,83 @@
+---
+- name: List latest 10 rows from a PostgreSQL table
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  collections:
+    - amazon.aws
+    - community.postgresql
+
+  vars:
+    json_data: "{{ lookup('file', json_file_path) | from_json }}"
+    aws_region: "{{ json_data.aws_region | default('us-east-1') }}"
+    db_name: "{{ json_data.db_name | default('trade_feed_db') }}"
+
+  tasks:
+    - name: Ensure table_name is set
+      set_fact:
+        table_name: "{{ table_name | default('default_table_name') }}"
+      when: table_name is not defined
+
+    - name: Fail if table_name is not provided
+      fail:
+        msg: "The variable 'table_name' must be provided as an extra variable."
+      when: table_name == 'default_table_name'
+
+    - name: Determine the db_instance_identifier for the RDS instance
+      command: >
+        aws rds describe-db-instances
+        --region "{{ aws_region }}"
+        --query "DBInstances[?DBName=='{{ db_name }}'].DBInstanceIdentifier | [0]"
+        --output text
+      register: db_instance_identifier_result
+
+    - name: Fail if the DB instance identifier was not found
+      fail:
+        msg: "The DB instance identifier could not be determined for the database '{{ db_name }}'. Ensure the database exists and is accessible."
+      when: db_instance_identifier_result.stdout == ""
+
+    - name: Set db_instance_identifier variable
+      set_fact:
+        db_instance_identifier: "{{ db_instance_identifier_result.stdout }}"
+
+    - name: Determine the db_endpoint for the RDS instance
+      command: >
+        aws rds describe-db-instances
+        --db-instance-identifier "{{ db_instance_identifier }}"
+        --region "{{ aws_region }}"
+        --query "DBInstances[0].Endpoint.Address"
+        --output text
+      register: rds_endpoint
+
+    - name: Fail if the DB endpoint was not found
+      fail:
+        msg: "The DB endpoint could not be determined for the instance identifier '{{ db_instance_identifier }}'. Ensure the database instance exists and is accessible."
+      when: rds_endpoint.stdout == ""
+
+    - name: Set db_endpoint variable
+      set_fact:
+        db_endpoint: "{{ rds_endpoint.stdout }}"
+
+    - name: Print important values
+      debug:
+        msg:
+          - "AWS Region: {{ aws_region }}"
+          - "DB Instance Identifier: {{ db_instance_identifier }}"
+          - "DB Name: {{ db_name }}"
+          - "DB Endpoint: {{ db_endpoint }}"
+          - "Table Name: {{ table_name }}"
+
+    - name: List latest 10 rows from the table
+      community.postgresql.postgresql_query:
+        db: "{{ db_name }}"
+        query: "SELECT * FROM {{ table_name }} ORDER BY created_at DESC LIMIT 10;"
+        login_host: "{{ db_endpoint }}"
+        login_user: "{{ json_data.master_username }}"
+        login_password: "{{ json_data.master_user_password }}"
+        port: 5432
+      register: latest_rows
+
+    - name: Print latest rows
+      debug:
+        var: latest_rows.query_result

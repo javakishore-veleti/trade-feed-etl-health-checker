@@ -16,6 +16,7 @@ fi
 
 ENVIRONMENT=$1
 PLAYBOOK_COMMAND=$2
+TABLE_NAME=$3 # Optional third argument for table name
 
 # Extract AWS region from the environment string
 AWS_REGION=$(echo $ENVIRONMENT | awk -F "-" '{print $2"-"$3"-"$4}')
@@ -71,8 +72,12 @@ else
     echo "Password validation succeeded."
 fi
 
-# Correctly structure the ansible-playbook command
-ANSIBLE_CMD="ansible-playbook -e aws_region=${AWS_REGION} -e environment=${ENVIRONMENT} -e json_file_path=${JSON_FILE} $PLAYBOOK_COMMAND -vvv"
+# Correctly structure the ansible-playbook command with table name if provided
+if [ -z "$TABLE_NAME" ]; then
+    ANSIBLE_CMD="ansible-playbook -e aws_region=${AWS_REGION} -e environment=${ENVIRONMENT} -e json_file_path=${JSON_FILE} $PLAYBOOK_COMMAND -vvv"
+else
+    ANSIBLE_CMD="ansible-playbook -e aws_region=${AWS_REGION} -e environment=${ENVIRONMENT} -e json_file_path=${JSON_FILE} -e table_name=${TABLE_NAME} $PLAYBOOK_COMMAND -vvv"
+fi
 
 # Execute the ansible-playbook command
 echo "Running: $ANSIBLE_CMD"

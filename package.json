@@ -39,6 +39,10 @@
 
     "setup-postgres-eventbridge-lambda-ses:dev-us-east-1": "sh ./run_protected_playbook.sh dev-us-east-1 playbooks/postgres_db_pool_eventbridge_lambda_ses.yml",
     "setup-postgres-eventbridge-lambda-ses:qa-eu-west-1": "sh ./run_protected_playbook.sh qa-eu-west-1 playbooks/postgres_db_pool_eventbridge_lambda_ses.yml",
-    "setup-postgres-eventbridge-lambda-ses:prod-ap-south-1": "sh ./run_protected_playbook.sh prod-ap-south-1 playbooks/postgres_db_pool_eventbridge_lambda_ses.yml"
+    "setup-postgres-eventbridge-lambda-ses:prod-ap-south-1": "sh ./run_protected_playbook.sh prod-ap-south-1 playbooks/postgres_db_pool_eventbridge_lambda_ses.yml",
+
+    "list-postgres-table-latest-rows:dev-us-east-1": "TABLE_NAME=your_table_name sh ./run_protected_playbook.sh dev-us-east-1 \"-e table_name=$TABLE_NAME playbooks/list_postgres_table_latest_rows.yml\""
+
+    
   }
 }

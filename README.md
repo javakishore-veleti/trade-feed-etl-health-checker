@@ -205,6 +205,11 @@ npm run execute-sql-scripts:dev-us-east-1
 # List Tables in PostgreSQL Database for Dev Environment
 npm run trade-feed-list-tables:dev-us-east-1
 
+npm run list-postgres-table-latest-rows:dev-us-east-1 --table_name=trade_feed_log
+TABLE_NAME=trade_feed_log npm run list-postgres-table-latest-rows:dev-us-east-1
+
+
+
 # Setup AWS Event Bridge Lambda AWS SES
 npm run setup-postgres-eventbridge-lambda-ses:dev-us-east-1
 
