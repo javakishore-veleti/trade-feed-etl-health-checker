@@ -1,3 +1,4 @@
+---
 - name: Setup PostgreSQL, EventBridge, Lambda, and SES with Monitoring
   hosts: localhost
   connection: local
@@ -13,7 +14,6 @@
     aws_secret_key: "{{ json_data.aws_secret_access_key }}"
     db_instance_identifier: "{{ json_data.db_instance_identifier | default('dev-trade-feed-db') }}"
     db_name: "{{ json_data.db_name | default('trade_feed_db') }}"
-    db_endpoint: "{{ json_data.db_endpoint | default('default-db-endpoint') }}"
     db_port: "{{ json_data.db_port | default(5432) }}"
     db_user: "{{ json_data.master_username | default('defaultuser') }}"
     db_password: "{{ json_data.master_user_password | default('defaultpassword') }}"
@@ -21,97 +21,66 @@
     eventbridge_schedule_expression: "{{ json_data.eventbridge_schedule_expression | default('rate(15 minutes)') }}"
     lambda_function_name: "{{ json_data.lambda_function_name | default('lambda_fn_trade_feed_tables_counts_checker') }}"
     ses_email: "{{ json_data.ses_email | default('your-verified-email@example.com') }}"
+    tables: "{{ json_data.tables | default([]) }}"
 
   tasks:
+    - name: Determine the db_endpoint from RDS instance
+      command: >
+        aws rds describe-db-instances
+        --db-instance-identifier "{{ db_instance_identifier }}"
+        --region "{{ aws_region }}"
+        --query "DBInstances[0].Endpoint.Address"
+        --output text
+      register: rds_endpoint
+
+    - name: Fail if the DB endpoint was not found
+      fail:
+        msg: "The DB endpoint could not be determined for the instance identifier '{{ db_instance_identifier }}'. Ensure the database instance exists and is accessible."
+      when: rds_endpoint.stdout == ""
+
+    - name: Set db_endpoint variable
+      set_fact:
+        db_endpoint: "{{ rds_endpoint.stdout }}"
 
     - name: Print important values
       debug:
-        msg: "Region: {{ aws_region }}, DB Endpoint: {{ db_endpoint }}, EventBridge Rule: {{ db_eventbridge_rule }}, SES Email: {{ ses_email }}"
+        msg:
+          - "AWS Region: {{ aws_region }}"
+          - "DB Name: {{ db_name }}"
+          - "DB Endpoint: {{ db_endpoint }}"
+          - "SES Email: {{ ses_email }}"
+          - "Tables and Thresholds: {{ tables }}"
 
-    - name: Check if the RDS instance exists
-      command: >
-        aws rds describe-db-instances
-        --db-instance-identifier "{{ db_instance_identifier }}"
-        --region "{{ aws_region }}"
-        --output json
-      register: rds_info
-      ignore_errors: yes
+    - name: Check table counts
+      community.postgresql.postgresql_query:
+        db: "{{ db_name }}"
+        query: "SELECT COUNT(*) FROM {{ item.name }};"
+        login_host: "{{ db_endpoint }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        port: "{{ db_port }}"
+      loop: "{{ tables }}"
+      loop_control:
+        loop_var: item
+      register: table_counts
 
-    - name: Fail if RDS instance does not exist
+    - name: Evaluate thresholds and set fact if exceeded
+      set_fact:
+        exceeds_threshold: "{{ exceeds_threshold | default(false) or (item.query_result[0].count > item.item.threshold) }}"
+      loop: "{{ table_counts.results }}"
+      loop_control:
+        loop_var: item
+
+    - name: Fail if any table exceeds threshold
       fail:
-        msg: "RDS instance '{{ db_instance_identifier }}' does not exist in region '{{ aws_region }}'. Please create the RDS instance before running this playbook."
-      when: "'DBInstanceNotFound' in rds_info.stderr"
+        msg: "One or more tables have exceeded the threshold count."
+      when: exceeds_threshold | default(false)
 
-    - name: Ensure RDS instance is available
+    - name: Send SES email if thresholds exceeded
       command: >
-        aws rds describe-db-instances
-        --db-instance-identifier "{{ db_instance_identifier }}"
+        aws ses send-email
         --region "{{ aws_region }}"
-        --output json
-      register: rds_availability
-      until: "'DBInstanceStatus': 'available' in rds_availability.stdout"
-      retries: 5
-      delay: 60
-      when: "'DBInstanceNotFound' not in rds_info.stderr"
-
-    - name: Check if EventBridge rule exists
-      command: >
-        aws events describe-rule
-        --name "{{ db_eventbridge_rule }}"
-        --region "{{ aws_region }}"
-      register: eventbridge_check
-      ignore_errors: yes
-
-    - name: Ensure EventBridge rule is set up
-      command: >
-        aws events put-rule
-        --name "{{ db_eventbridge_rule }}"
-        --schedule-expression "{{ eventbridge_schedule_expression }}"
-        --region "{{ aws_region }}"
-      register: eventbridge_info
-      when: "'ResourceNotFoundException' in eventbridge_check.stderr"
-
-    - name: Check if Lambda function exists
-      command: >
-        aws lambda get-function
-        --function-name "{{ lambda_function_name }}"
-        --region "{{ aws_region }}"
-      register: lambda_check
-      ignore_errors: yes
-
-    - name: Ensure Lambda function is set up
-      command: >
-        aws lambda create-function
-        --function-name "{{ lambda_function_name }}"
-        --region "{{ aws_region }}"
-        --handler "index.handler"
-        --runtime "python3.8"
-        --role "arn:aws:iam::your-account-id:role/your-lambda-execution-role"
-        --zip-file "fileb://your-deployment-package.zip"
-      register: lambda_info
-      when: "'ResourceNotFoundException' in lambda_check.stderr"
-
-    - name: Check if SES identity is verified
-      command: >
-        aws ses get-identity-verification-attributes
-        --identities "{{ ses_email }}"
-        --region "{{ aws_region }}"
-      register: ses_info
-      ignore_errors: yes
-
-    - name: Ensure SES identity is verified
-      command: >
-        aws ses verify-email-identity
-        --email-address "{{ ses_email }}"
-        --region "{{ aws_region }}"
-      when: "'VerificationStatus' not in ses_info.stdout"
-
-    - name: Attach EventBridge rule to Lambda target
-      command: >
-        aws events put-targets
-        --rule "{{ db_eventbridge_rule }}"
-        --targets "Id"="1","Arn"="{{ lambda_info.stdout }}"
-        --region "{{ aws_region }}"
-      register: target_attach_info
-      failed_when: "'FailedEntryCount' > 0 in target_attach_info.stdout"
-      when: "'ResourceNotFoundException' in eventbridge_check.stderr"
+        --from "{{ ses_email }}"
+        --destination "ToAddresses={{ ses_email }}"
+        --message "Subject={Data='Threshold Exceeded Alert'},Body={Text={Data='One or more tables in the database {{ db_name }} have exceeded their threshold count.'}}"
+      when: exceeds_threshold | default(false)

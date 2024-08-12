@@ -35,3 +35,10 @@ lambda_function_name: "lambda_fn_trade_feed_tables_counts_checker"
 
 # Other configurations
 aws_debug: false
+
+"tables": [
+        {
+            "name": "trade_feed_ingest_log",
+            "threshold": 1000
+        }
+    ]
