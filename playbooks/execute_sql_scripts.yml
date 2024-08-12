@@ -1,40 +1,61 @@
 ---
-- name: Create Pre-defined Tables and Execute DML SQL Statements
+- name: Execute SQL scripts in order
   hosts: localhost
   connection: local
   gather_facts: no
 
   collections:
-    - community.postgresql
+    - amazon.aws
 
   vars:
-    # Load values from the JSON file in the user's home directory
     json_data: "{{ lookup('file', json_file_path) | from_json }}"
-    sql_scripts_dir: "{{ json_data.sql_scripts_dir | default('sql_scripts') }}"
-
-    db_endpoint: "{{ json_data.db_endpoint | default('default-db-endpoint') }}"
-    db_name: "{{ json_data.db_name | default('defaultdatabase') }}"
-    db_user: "{{ json_data.master_username | default('defaultuser') }}"
-    db_password: "{{ json_data.master_user_password | default('defaultpassword') }}"
-    db_port: "{{ json_data.db_port | default(5432) }}"
+    aws_region: "{{ json_data.aws_region | default('us-east-1') }}"
+    aws_access_key: "{{ json_data.aws_access_key_id }}"
+    aws_secret_key: "{{ json_data.aws_secret_access_key }}"
+    db_instance_identifier: "{{ json_data.db_instance_identifier | default('dev-trade-feed-db') }}"
+    db_name: "{{ json_data.db_name | default('trade_feed_db') }}"
+    sql_scripts_dir: "db_scripts/postgres_db/changeset"
 
   tasks:
-    - name: Find SQL scripts
+    - name: Check if the RDS instance exists
+      amazon.aws.rds_instance_info:
+        region: "{{ aws_region }}"
+        db_instance_identifier: "{{ db_instance_identifier }}"
+      register: rds_info
+      ignore_errors: true
+
+    - name: Fail if RDS instance does not exist
+      fail:
+        msg: "The RDS instance '{{ db_instance_identifier }}' does not exist. Please create the database instance first."
+      when: rds_info.db_instances is not defined or rds_info.db_instances | length == 0
+
+    - name: Set db_endpoint fact
+      set_fact:
+        db_endpoint: "{{ rds_info.db_instances[0].endpoint['Address'] }}"
+
+    - name: Print important values
+      debug:
+        msg:
+          - "AWS Region: {{ aws_region }}"
+          - "DB Instance Identifier: {{ db_instance_identifier }}"
+          - "DB Name: {{ db_name }}"
+          - "DB Endpoint: {{ db_endpoint }}"
+
+    - name: Find all SQL scripts
       find:
         paths: "{{ sql_scripts_dir }}"
         patterns: "*.sql"
         recurse: yes
-        sort: name
       register: found_scripts
 
-    - name: Execute SQL scripts in order
+    - name: Execute SQL scripts
       community.postgresql.postgresql_query:
         db: "{{ db_name }}"
-        query: "{{ lookup('file', item.path) }}"
         login_host: "{{ db_endpoint }}"
-        login_user: "{{ db_user }}"
-        login_password: "{{ db_password }}"
-        port: "{{ db_port }}"
+        login_user: "{{ json_data.master_username }}"
+        login_password: "{{ json_data.master_user_password }}"
+        port: 5432
+        query: "{{ lookup('file', item.path) }}"
       loop: "{{ found_scripts.files }}"
       loop_control:
         label: "{{ item.path }}"

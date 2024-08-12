@@ -1,0 +1,10 @@
+# group_vars/all/defaults.yml
+sql_scripts_dir: "../db_scripts/postgres_db/changeset"
+db_endpoint: "default-db-endpoint"
+db_name: "trade_feed_db"
+db_user: "trade_feed_db_user"
+db_password: "trade_feed_db_password_1"
+db_port: 5432
+db_instance_class: "db.t3.medium"
+db_engine": "postgres"
+db_allocated_storage: 20
